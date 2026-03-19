@@ -24,7 +24,7 @@ fn main() {
 
 fn default_station_path() -> PathBuf {
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(home).join(".relay-for-claw").join("station.db")
+    PathBuf::from(home).join(".clawmark").join("station.db")
 }
 
 fn default_claw_workspace() -> PathBuf {
@@ -33,7 +33,7 @@ fn default_claw_workspace() -> PathBuf {
 }
 
 fn get_db() -> Result<db::DatabaseManager, String> {
-    let path = std::env::var("RELAY_CLAW_STATION")
+    let path = std::env::var("CLAWMARK_STATION")
         .unwrap_or_else(|_| default_station_path().to_string_lossy().to_string());
     db::DatabaseManager::new(&path)
 }
@@ -72,7 +72,7 @@ fn run(cli: Cli) -> Result<String, String> {
             if errors > 0 {
                 lines.push(format!("⚠️  {} errors (see above)", errors));
             }
-            lines.push("Run 'relay-for-claw backfill' to enable semantic search.".to_string());
+            lines.push("Run 'clawmark backfill' to enable semantic search.".to_string());
             Ok(lines.join("\n"))
         }
 
@@ -216,7 +216,7 @@ fn run(cli: Cli) -> Result<String, String> {
             let db = get_db()?;
             let signals = db.count()?;
             let embeddings = db.embedding_count()?;
-            let path = std::env::var("RELAY_CLAW_STATION")
+            let path = std::env::var("CLAWMARK_STATION")
                 .unwrap_or_else(|_| default_station_path().to_string_lossy().to_string());
 
             let mut lines = vec![
@@ -225,7 +225,7 @@ fn run(cli: Cli) -> Result<String, String> {
                 format!("Embeddings: {}/{} cached", embeddings, signals),
             ];
             if embeddings < signals {
-                lines.push("Run 'relay-for-claw backfill' to cache remaining.".to_string());
+                lines.push("Run 'clawmark backfill' to cache remaining.".to_string());
             } else if signals > 0 {
                 lines.push("Semantic search: ready".to_string());
             }

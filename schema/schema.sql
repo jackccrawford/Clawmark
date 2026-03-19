@@ -1,7 +1,7 @@
--- relay-for-claw Station Schema v1.0
+-- clawmark Station Schema v1.0
 CREATE TABLE IF NOT EXISTS _meta (key TEXT PRIMARY KEY, value TEXT);
 INSERT OR IGNORE INTO _meta VALUES ('version', '1.0');
-INSERT OR IGNORE INTO _meta VALUES ('product', 'relay-for-claw');
+INSERT OR IGNORE INTO _meta VALUES ('product', 'clawmark');
 
 CREATE TABLE IF NOT EXISTS signals (
     signal_uuid TEXT PRIMARY KEY NOT NULL CHECK(length(signal_uuid) = 36),

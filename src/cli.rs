@@ -2,11 +2,11 @@ use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(
-    name = "relay-for-claw",
+    name = "clawmark",
     version,
     about = "Persistent memory for OpenClaw agents",
-    long_about = "RELAY-FOR-CLAW: Persistent memory for OpenClaw agents.\n\nReplace markdown grep with semantic search.\nYour agent remembers across sessions.",
-    after_help = "Examples:\n  relay-for-claw migrate ~/.openclaw/workspace    Import OpenClaw memory\n  relay-for-claw signal -c \"Fixed the auth bug\" -g \"fix: token refresh\"\n  relay-for-claw tune \"auth\"                       Semantic search\n  relay-for-claw tune --recent                     Latest signals\n  relay-for-claw backfill                          Build embedding cache\n\nTip: Run 'relay-for-claw migrate' first to import your existing OpenClaw memory.\n\nUse \"relay-for-claw [command] --help\" for more information."
+    long_about = "CLAWMARK: Persistent memory for OpenClaw agents.\n\nReplace markdown grep with semantic search.\nYour agent remembers across sessions.",
+    after_help = "Examples:\n  clawmark migrate ~/.openclaw/workspace    Import OpenClaw memory\n  clawmark signal -c \"Fixed the auth bug\" -g \"fix: token refresh\"\n  clawmark tune \"auth\"                       Semantic search\n  clawmark tune --recent                     Latest signals\n  clawmark backfill                          Build embedding cache\n\nTip: Run 'clawmark migrate' first to import your existing OpenClaw memory.\n\nUse \"clawmark [command] --help\" for more information."
 )]
 pub struct Cli {
     #[command(subcommand)]
@@ -34,7 +34,7 @@ impl Cli {
 pub enum Command {
     /// Import OpenClaw memory into a relay station
     #[command(
-        after_help = "Examples:\n  relay-for-claw migrate                             Auto-detect workspace\n  relay-for-claw migrate ~/.openclaw/workspace       Specify path\n  relay-for-claw migrate --dry-run                   Preview without importing\n\nImports MEMORY.md and memory/YYYY-MM-DD.md files as signals.\nTimestamps preserved. Daily logs split by ## headers into threaded signals."
+        after_help = "Examples:\n  clawmark migrate                             Auto-detect workspace\n  clawmark migrate ~/.openclaw/workspace       Specify path\n  clawmark migrate --dry-run                   Preview without importing\n\nImports MEMORY.md and memory/YYYY-MM-DD.md files as signals.\nTimestamps preserved. Daily logs split by ## headers into threaded signals."
     )]
     Migrate {
         /// Path to OpenClaw workspace (default: ~/.openclaw/workspace)
@@ -48,7 +48,7 @@ pub enum Command {
     /// Transmit a signal to your station
     #[command(
         arg_required_else_help = true,
-        after_help = "Examples:\n  relay-for-claw signal -c \"Fixed the auth bug\"\n  relay-for-claw signal -c \"Token refresh order\" -g \"fix: auth token refresh\"\n  relay-for-claw signal -c @notes.md -g \"session: review\"\n  echo \"content\" | relay-for-claw signal -c - -g \"piped: from process\"\n\nTip: The gist is how future agents find this signal. Write for them."
+        after_help = "Examples:\n  clawmark signal -c \"Fixed the auth bug\"\n  clawmark signal -c \"Token refresh order\" -g \"fix: auth token refresh\"\n  clawmark signal -c @notes.md -g \"session: review\"\n  echo \"content\" | clawmark signal -c - -g \"piped: from process\"\n\nTip: The gist is how future agents find this signal. Write for them."
     )]
     Signal {
         /// Content to transmit
@@ -70,7 +70,7 @@ pub enum Command {
 
     /// Search your station — semantic by default
     #[command(
-        after_help = "Examples:\n  relay-for-claw tune \"auth token\"                  Semantic search\n  relay-for-claw tune --keyword \"auth\"               Keyword fallback\n  relay-for-claw tune --recent                       Latest signals\n  relay-for-claw tune --random                       Discover something\n  relay-for-claw tune --full \"auth\"                   Include full content\n\nTip: Run 'relay-for-claw backfill' first to enable semantic search."
+        after_help = "Examples:\n  clawmark tune \"auth token\"                  Semantic search\n  clawmark tune --keyword \"auth\"               Keyword fallback\n  clawmark tune --recent                       Latest signals\n  clawmark tune --random                       Discover something\n  clawmark tune --full \"auth\"                   Include full content\n\nTip: Run 'clawmark backfill' first to enable semantic search."
     )]
     Tune {
         /// Search query

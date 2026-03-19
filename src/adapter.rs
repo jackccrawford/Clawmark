@@ -1,4 +1,4 @@
-//! OpenClaw memory adapter — reads markdown memory files, migrates to relay signals
+//! OpenClaw memory adapter — reads markdown memory files, migrates to clawmark signals
 //!
 //! Reads:
 //!   - MEMORY.md (curated long-term memory)

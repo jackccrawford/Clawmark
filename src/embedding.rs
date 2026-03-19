@@ -1,4 +1,4 @@
-//! Embedding backend for semantic search — ported from ocean-core/relay
+//! Embedding backend for semantic search
 //!
 //! Built-in ONNX Runtime with paraphrase-multilingual-MiniLM-L12-v2.
 //! 384-dim, INT8 quantized, auto-downloads on first use.
@@ -22,7 +22,7 @@ fn onnx_model_filename() -> &'static str {
 
 fn default_models_dir() -> PathBuf {
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(home).join(".relay-for-claw").join("models")
+    PathBuf::from(home).join(".clawmark").join("models")
 }
 
 pub trait EmbeddingBackend {
@@ -41,7 +41,7 @@ pub struct BuiltinBackend {
 
 impl BuiltinBackend {
     pub fn new() -> Result<Self, String> {
-        let models_dir = std::env::var("RELAY_CLAW_MODELS_PATH")
+        let models_dir = std::env::var("CLAWMARK_MODELS_PATH")
             .map(PathBuf::from)
             .unwrap_or_else(|_| default_models_dir());
 
@@ -53,14 +53,14 @@ impl BuiltinBackend {
 
         if !model_path.exists() {
             let url = format!("{}/{}", HF_BASE_URL, onnx_model_filename());
-            eprintln!("[relay-for-claw] Downloading model from {}...", url);
+            eprintln!("[clawmark] Downloading model from {}...", url);
             download_file(&url, &model_path)?;
-            eprintln!("[relay-for-claw] Model saved to {}", model_path.display());
+            eprintln!("[clawmark] Model saved to {}", model_path.display());
         }
 
         if !tokenizer_path.exists() {
             let url = format!("{}/tokenizer.json", HF_BASE_URL);
-            eprintln!("[relay-for-claw] Downloading tokenizer...");
+            eprintln!("[clawmark] Downloading tokenizer...");
             download_file(&url, &tokenizer_path)?;
         }
 
@@ -83,7 +83,7 @@ impl BuiltinBackend {
         tokenizer.with_truncation(Some(truncation))
             .map_err(|e| format!("Failed to set truncation: {}", e))?;
 
-        eprintln!("[relay-for-claw] Semantic search ready ({})", onnx_model_filename());
+        eprintln!("[clawmark] Semantic search ready ({})", onnx_model_filename());
 
         Ok(Self { session: Mutex::new(session), tokenizer })
     }
@@ -181,9 +181,9 @@ struct OllamaResp { embedding: Vec<f32> }
 impl OllamaBackend {
     pub fn new() -> Self {
         Self {
-            url: std::env::var("RELAY_CLAW_EMBED_URL")
+            url: std::env::var("CLAWMARK_EMBED_URL")
                 .unwrap_or_else(|_| "http://localhost:11434/api/embeddings".to_string()),
-            model: std::env::var("RELAY_CLAW_EMBED_MODEL")
+            model: std::env::var("CLAWMARK_EMBED_MODEL")
                 .unwrap_or_else(|_| "paraphrase-multilingual:278m".to_string()),
         }
     }
@@ -210,7 +210,7 @@ pub fn create_backend() -> Result<Box<dyn EmbeddingBackend>, String> {
     match BuiltinBackend::new() {
         Ok(b) => Ok(Box::new(b)),
         Err(e) => {
-            eprintln!("[relay-for-claw] ONNX failed ({}), falling back to ollama", e);
+            eprintln!("[clawmark] ONNX failed ({}), falling back to ollama", e);
             Ok(Box::new(OllamaBackend::new()))
         }
     }

@@ -160,7 +160,7 @@ impl DatabaseManager {
     pub fn semantic_search(&self, query: &str, limit: usize) -> Result<Vec<SignalEntry>, String> {
         let cached = self.get_cached_embeddings()?;
         if cached.is_empty() {
-            eprintln!("[relay-for-claw] No embedding cache. Run: relay-for-claw backfill");
+            eprintln!("[clawmark] No embedding cache. Run: clawmark backfill");
             return self.keyword_search(query, limit);
         }
 

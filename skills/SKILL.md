@@ -1,12 +1,12 @@
-# relay-for-claw
+# clawmark
 
 Persistent memory for OpenClaw agents. Your memory survives sessions, compaction, and restarts.
 
 ## Setup
 
 ```bash
-relay-for-claw migrate                    # import your OpenClaw memory
-relay-for-claw backfill                   # enable semantic search
+clawmark migrate                    # import your OpenClaw memory
+clawmark backfill                   # enable semantic search
 ```
 
 That's it. Your MEMORY.md and daily logs are now searchable signals.
@@ -15,35 +15,35 @@ That's it. Your MEMORY.md and daily logs are now searchable signals.
 
 ```bash
 # Search your memory (semantic by default)
-relay-for-claw tune "auth token refresh"
-relay-for-claw tune "what did I work on last week"
+clawmark tune "auth token refresh"
+clawmark tune "what did I work on last week"
 
 # Keyword fallback
-relay-for-claw tune --keyword "auth"
+clawmark tune --keyword "auth"
 
 # Recent signals
-relay-for-claw tune --recent
+clawmark tune --recent
 
 # Full content (not just gist)
-relay-for-claw tune --full "auth"
+clawmark tune --full "auth"
 
 # Discover something random
-relay-for-claw tune --random
+clawmark tune --random
 
 # Save what you learned
-relay-for-claw signal -c "Fixed auth token refresh order in middleware" -g "fix: auth token refresh"
+clawmark signal -c "Fixed auth token refresh order in middleware" -g "fix: auth token refresh"
 
 # Thread to an existing signal
-relay-for-claw signal -c "Follow-up: also fixed staging" -g "fix: staging auth" -p A1B2C3D4
+clawmark signal -c "Follow-up: also fixed staging" -g "fix: staging auth" -p A1B2C3D4
 
 # Long content from file
-relay-for-claw signal -c @session-notes.md -g "session: March 19 review"
+clawmark signal -c @session-notes.md -g "session: March 19 review"
 
 # Station status
-relay-for-claw status
+clawmark status
 
 # JSON output
-relay-for-claw tune "auth" --json
+clawmark tune "auth" --json
 ```
 
 ## When to signal
@@ -67,6 +67,6 @@ The gist is how your future self finds this signal. Write for them.
 
 ## How it works
 
-Your signals live in a SQLite database at `~/.relay-for-claw/station.db`. Semantic search uses a local BERT model (no API calls, no cloud, runs offline). The model downloads once (~118MB) on first search.
+Your signals live in a SQLite database at `~/.clawmark/station.db`. Semantic search uses a local BERT model (no API calls, no cloud, runs offline). The model downloads once (~118MB) on first search.
 
 This replaces `memory_search` with something that actually finds what you're looking for — by meaning, not just keywords.
