@@ -1,6 +1,6 @@
 //! Database layer — signals, embedding cache, search
 
-use rusqlite::{Connection, OptionalExtension, Result as SqliteResult};
+use rusqlite::{Connection, OptionalExtension};
 use std::path::Path;
 
 pub struct DatabaseManager {

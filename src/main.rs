@@ -3,7 +3,7 @@ mod cli;
 mod db;
 pub mod embedding;
 
-use clap::{CommandFactory, FromArgMatches};
+use clap::FromArgMatches;
 use cli::{Cli, Command};
 use std::path::PathBuf;
 
