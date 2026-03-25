@@ -2,7 +2,8 @@
 set -e
 
 REPO="jackccrawford/clawmark"
-INSTALL_DIR="${CLAWMARK_INSTALL_DIR:-$HOME/.local/bin}"
+CLAWMARK_HOME="${CLAWMARK_HOME:-$HOME/.clawmark}"
+INSTALL_DIR="${CLAWMARK_HOME}/bin"
 
 # Detect platform
 OS="$(uname -s)"
@@ -64,17 +65,19 @@ fi
 
 # Extract and install
 mkdir -p "$INSTALL_DIR"
+mkdir -p "$TMPDIR/extract"
 tar xzf "$TMPDIR/clawmark.tar.gz" -C "$TMPDIR/extract"
 cp "$TMPDIR/extract/clawmark" "$INSTALL_DIR/"
 chmod +x "${INSTALL_DIR}/clawmark"
 
 # Install bundled libonnxruntime if present (ARM64 Linux)
 if [ -f "$TMPDIR/extract/libonnxruntime.so.1.22.0" ]; then
-  LIB_DIR="${INSTALL_DIR}/../lib"
+  LIB_DIR="${CLAWMARK_HOME}/lib"
   mkdir -p "$LIB_DIR"
   cp "$TMPDIR/extract/libonnxruntime.so.1.22.0" "$LIB_DIR/"
   ln -sf libonnxruntime.so.1.22.0 "$LIB_DIR/libonnxruntime.so"
-  # Wrapper script to set LD_LIBRARY_PATH
+  ln -sf libonnxruntime.so.1.22.0 "$LIB_DIR/libonnxruntime.so.1"
+  # Wrapper script — finds lib relative to bin, no env var modification needed
   mv "${INSTALL_DIR}/clawmark" "${INSTALL_DIR}/clawmark.bin"
   cat > "${INSTALL_DIR}/clawmark" <<'WRAPPER'
 #!/bin/sh
@@ -91,13 +94,14 @@ if "${INSTALL_DIR}/clawmark" --version > /dev/null 2>&1; then
   VERSION=$("${INSTALL_DIR}/clawmark" --version)
   echo ""
   echo "  Installed: ${VERSION}"
-  echo "  Location:  ${INSTALL_DIR}/clawmark"
+  echo "  Location:  ${CLAWMARK_HOME}/"
   echo ""
   # Check PATH
   case ":$PATH:" in
     *":${INSTALL_DIR}:"*) ;;
     *) echo "  Add to PATH: export PATH=\"${INSTALL_DIR}:\$PATH\"" ;;
   esac
+  echo ""
   echo "  Next: clawmark signal -c \"Hello from clawmark\" -g \"first signal\""
 else
   echo "Installation failed" >&2
