@@ -150,7 +150,7 @@ fn execute_recall(db: &DatabaseManager, params: &Value) -> (String, bool) {
         None => return ("Error: query is required".to_string(), true),
     };
     let full = params.get("full").and_then(|f| f.as_bool()).unwrap_or(false);
-    let limit = params.get("limit").and_then(|l| l.as_u64()).unwrap_or(10) as usize;
+    let limit = params.get("limit").and_then(|l| l.as_u64()).unwrap_or(10).min(100) as usize;
 
     // Semantic first, keyword fallback
     let results = match db.semantic_search(query, limit) {
@@ -169,7 +169,7 @@ fn execute_recall(db: &DatabaseManager, params: &Value) -> (String, bool) {
 }
 
 fn execute_recall_recent(db: &DatabaseManager, params: &Value) -> (String, bool) {
-    let limit = params.get("limit").and_then(|l| l.as_u64()).unwrap_or(5) as usize;
+    let limit = params.get("limit").and_then(|l| l.as_u64()).unwrap_or(5).min(100) as usize;
     let full = params.get("full").and_then(|f| f.as_bool()).unwrap_or(false);
 
     match db.recent(limit) {
@@ -225,7 +225,13 @@ pub fn serve() {
 
         let request: JsonRpcRequest = match serde_json::from_str(&line) {
             Ok(r) => r,
-            Err(_) => continue,
+            Err(e) => {
+                let resp = error_response(Value::Null, -32700, &format!("Parse error: {}", e));
+                let json_str = serde_json::to_string(&resp).unwrap_or_default();
+                let _ = writeln!(stdout, "{}", json_str);
+                let _ = stdout.flush();
+                continue;
+            }
         };
 
         let id = request.id.clone().unwrap_or(Value::Null);
