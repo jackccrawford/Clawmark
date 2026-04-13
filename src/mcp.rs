@@ -347,7 +347,7 @@ pub fn install() -> Result<String, String> {
     ];
 
     // Check if station exists
-    let station = crate::default_station_path();
+    let station = crate::default_db_path();
     if station.exists() {
         let db = crate::get_db()?;
         let count = db.count().unwrap_or(0);
@@ -388,7 +388,7 @@ pub fn status() -> Result<String, String> {
     }
 
     // Station info
-    let station = crate::default_station_path();
+    let station = crate::default_db_path();
     if station.exists() {
         if let Ok(db) = crate::get_db() {
             let count = db.count().unwrap_or(0);

@@ -77,6 +77,13 @@ if [ -f "$TMPDIR/extract/geniuz-embed" ]; then
   chmod +x "${INSTALL_DIR}/geniuz-embed"
 fi
 
+# macOS: ad-hoc codesign to clear provenance gate (Sequoia+)
+if [ "$os" = "darwin" ] && command -v codesign > /dev/null 2>&1; then
+  codesign --force --sign - "${INSTALL_DIR}/geniuz" 2>/dev/null
+  [ -f "${INSTALL_DIR}/geniuz-embed" ] && codesign --force --sign - "${INSTALL_DIR}/geniuz-embed" 2>/dev/null
+  echo "  Signed for macOS."
+fi
+
 # Install bundled ONNX Runtime if present
 # Linux: libonnxruntime.so.* | Mac: libonnxruntime.*.dylib
 BUNDLED_LIB=""

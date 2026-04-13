@@ -22,14 +22,9 @@ fn main() {
     }
 }
 
-fn default_station_path() -> PathBuf {
+fn default_db_path() -> PathBuf {
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
     PathBuf::from(home).join(".geniuz").join("memory.db")
-}
-
-fn legacy_station_path() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(home).join(".clawmark").join("memory.db")
 }
 
 fn default_claw_workspace() -> PathBuf {
@@ -42,13 +37,19 @@ pub fn get_db() -> Result<db::DatabaseManager, String> {
     let path = std::env::var("GENIUZ_STATION")
         .or_else(|_| std::env::var("CLAWMARK_STATION"))
         .unwrap_or_else(|_| {
-            let new_path = default_station_path();
-            let old_path = legacy_station_path();
+            let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+            let new_path = default_db_path();
+            let geniuz_legacy = PathBuf::from(&home).join(".geniuz").join("station.db");
+            let clawmark_legacy = PathBuf::from(&home).join(".clawmark").join("station.db");
+
             if new_path.exists() {
                 new_path.to_string_lossy().to_string()
-            } else if old_path.exists() {
-                eprintln!("[geniuz] Using legacy station at ~/.clawmark/memory.db");
-                old_path.to_string_lossy().to_string()
+            } else if geniuz_legacy.exists() {
+                eprintln!("[geniuz] Using existing folder at ~/.geniuz/station.db");
+                geniuz_legacy.to_string_lossy().to_string()
+            } else if clawmark_legacy.exists() {
+                eprintln!("[geniuz] Using legacy folder at ~/.clawmark/station.db");
+                clawmark_legacy.to_string_lossy().to_string()
             } else {
                 new_path.to_string_lossy().to_string()
             }
@@ -496,7 +497,7 @@ fn run(cli: Cli) -> Result<String, String> {
             let embeddings = db.embedding_count()?;
             let path = std::env::var("GENIUZ_STATION")
                 .or_else(|_| std::env::var("CLAWMARK_STATION"))
-                .unwrap_or_else(|_| default_station_path().to_string_lossy().to_string());
+                .unwrap_or_else(|_| default_db_path().to_string_lossy().to_string());
 
             let mut lines = vec![
                 format!("Folder: {}", path),
