@@ -22,25 +22,43 @@ fn main() {
     }
 }
 
+/// User's home directory, cross-platform.
+/// On Windows this is %USERPROFILE% (HOME is not standard there).
+fn home_dir() -> PathBuf {
+    dirs::home_dir().unwrap_or_else(|| PathBuf::from("."))
+}
+
+/// Resolve the Geniuz data directory. Precedence:
+///   1. GENIUZ_HOME env var (set by the installer's directory picker, or by the user)
+///   2. ~/.geniuz on every platform
+///
+/// The data directory holds memory.db, the embedding model cache, and any other
+/// per-user state. The user can pick this location at install time so the dir
+/// is created in user context (no sandbox restrictions) and remains accessible
+/// from sandboxed Claude Desktop child processes.
+pub fn data_dir() -> PathBuf {
+    std::env::var("GENIUZ_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| home_dir().join(".geniuz"))
+}
+
 fn default_db_path() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(home).join(".geniuz").join("memory.db")
+    data_dir().join("memory.db")
 }
 
 fn default_claw_workspace() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(home).join(".openclaw").join("workspace")
+    home_dir().join(".openclaw").join("workspace")
 }
 
 pub fn get_db() -> Result<db::DatabaseManager, String> {
-    // Check env vars: GENIUZ_STATION first, CLAWMARK_STATION as legacy fallback
+    // Precedence: GENIUZ_STATION (explicit DB file path) > GENIUZ_HOME-derived default
+    //             > legacy ~/.geniuz/station.db > legacy ~/.clawmark/station.db
     let path = std::env::var("GENIUZ_STATION")
         .or_else(|_| std::env::var("CLAWMARK_STATION"))
         .unwrap_or_else(|_| {
-            let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
             let new_path = default_db_path();
-            let geniuz_legacy = PathBuf::from(&home).join(".geniuz").join("station.db");
-            let clawmark_legacy = PathBuf::from(&home).join(".clawmark").join("station.db");
+            let geniuz_legacy = home_dir().join(".geniuz").join("station.db");
+            let clawmark_legacy = home_dir().join(".clawmark").join("station.db");
 
             if new_path.exists() {
                 new_path.to_string_lossy().to_string()
@@ -519,8 +537,8 @@ fn run(cli: Cli) -> Result<String, String> {
                     mcp::serve();
                     Ok(String::new())
                 }
-                McpCommand::Install => {
-                    mcp::install()
+                McpCommand::Install { env } => {
+                    mcp::install(&env)
                 }
                 McpCommand::Status => {
                     mcp::status()
