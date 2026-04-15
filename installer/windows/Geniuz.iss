@@ -103,7 +103,8 @@ begin
     False, ''
   );
   DataDirPage.Add('');
-  DataDirPage.Values[0] := ExpandConstant('{userprofile}\.geniuz');
+  // Inno Setup has no {userprofile} constant; use the env-var expansion syntax.
+  DataDirPage.Values[0] := ExpandConstant('{%USERPROFILE}\.geniuz');
 end;
 
 function GetDataDir(Param: string): string;
