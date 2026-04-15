@@ -1,8 +1,19 @@
 ; Geniuz Free for Windows — Inno Setup installer script
-; Per-user install (no admin), matches the philosophy of "your AI on your machine"
+;
+; Per-user install only. Memory is per-user by design (your memories aren't
+; your colleague's memories), and per-user install sidesteps the all-users
+; ambiguity where the installer can't pre-create per-user data dirs for
+; users who haven't logged in yet.
+;
+; The user picks the data directory (memory.db location) during install.
+; Default: %USERPROFILE%\.geniuz. The installer creates the chosen dir in
+; user context (no sandbox restriction) and grants ALL APPLICATION PACKAGES
+; write access — so when sandboxed Claude Desktop later launches geniuz as
+; a child process, it can read/write the database without a sandbox-denied
+; mkdir failure.
 
 #define MyAppName "Geniuz"
-#define MyAppVersion "1.0.3"
+#define MyAppVersion "1.0.4"
 #define MyAppPublisher "Managed Ventures LLC"
 #define MyAppURL "https://geniuz.life"
 #define MyAppExeName "geniuz.exe"
@@ -21,8 +32,8 @@ AppComments={#MyAppDescription}
 DefaultDirName={localappdata}\Programs\Geniuz
 DefaultGroupName=Geniuz
 DisableProgramGroupPage=yes
+; Per-user install only — no admin elevation, no all-users option.
 PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=output
 OutputBaseFilename=Geniuz-Setup
 Compression=lzma2
@@ -32,10 +43,6 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayName={#MyAppName}
 UninstallDisplayIcon={app}\Geniuz.ico
-; Geniuz.ico is multi-resolution (16/32/48/64/128/256). Used as:
-;   - The installer .exe icon (SetupIconFile)
-;   - The Add/Remove Programs entry icon (UninstallDisplayIcon → file in install dir)
-;   - The uninstaller .exe icon (auto-derived from SetupIconFile by Inno)
 SetupIconFile=Geniuz.ico
 
 [Languages]
@@ -46,25 +53,64 @@ Source: "geniuz.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "geniuz-embed.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "Geniuz.ico"; DestDir: "{app}"; Flags: ignoreversion
 
+[Dirs]
+; Create the user-chosen data directory in user context (no sandbox issue).
+Name: "{code:GetDataDir}"
+
 [Registry]
-; Add install dir to user PATH (only if not already present)
+; Add install dir to user PATH (only if not already present).
 Root: HKCU; Subkey: "Environment"; ValueType: expandsz; ValueName: "Path"; \
   ValueData: "{olddata};{app}"; \
   Check: NeedsAddPath('{app}')
+; Persist the user's data directory choice as an environment variable.
+; This lets the CLI (from any future shell) and external tools discover
+; where memories live without parsing the Claude Desktop config.
+Root: HKCU; Subkey: "Environment"; ValueType: expandsz; ValueName: "GENIUZ_HOME"; \
+  ValueData: "{code:GetDataDir}"
 
 [Run]
-; Wire Claude Desktop MCP config. The CLI (v1.0.2+) now writes to all known
-; Claude Desktop config locations:
-;   - %APPDATA%\Claude\         (the .exe variant)
-;   - %LOCALAPPDATA%\Packages\Claude_*\LocalCache\Roaming\Claude\
-;     (the Microsoft Store / MSIX packaged variant)
-; This is much more robust than v1.0.1, which only wrote the standard path
-; and silently missed Store-version Claude users.
-Filename: "{app}\{#MyAppExeName}"; Parameters: "mcp install"; \
+; Grant ALL APPLICATION PACKAGES (S-1-15-2-1) read+write on the data dir.
+; Without this, sandboxed Claude Desktop can launch geniuz.exe but the
+; child can't access the database file → "Geniuz Disconnected" in Claude.
+; (OI)(CI)F = object inherit + container inherit + full control on contents.
+Filename: "{sys}\icacls.exe"; \
+  Parameters: """{code:GetDataDir}"" /grant ""*S-1-15-2-1:(OI)(CI)M"""; \
+  StatusMsg: "Granting sandboxed apps access to memory folder..."; \
+  Flags: runhidden
+
+; Wire Claude Desktop MCP config. Pass GENIUZ_HOME so the entry includes
+; the env block — important on Windows because sandboxed Claude doesn't
+; inherit the user's HKCU environment; the path has to be embedded in the
+; MCP config itself.
+Filename: "{app}\{#MyAppExeName}"; \
+  Parameters: "mcp install --env GENIUZ_HOME=""{code:GetDataDir}"""; \
   StatusMsg: "Configuring Claude Desktop integration..."; \
   Flags: runhidden
 
 [Code]
+var
+  DataDirPage: TInputDirWizardPage;
+
+procedure InitializeWizard;
+begin
+  DataDirPage := CreateInputDirPage(
+    wpSelectDir,
+    'Memory location',
+    'Where should Geniuz keep your memories?',
+    'Geniuz keeps your memories — and the embedding model that searches them — in this folder.' + #13#10 + #13#10 +
+    'The default works for most people. You can change it to any folder you have rights to write — for example a different drive, or a synced folder if you want memories across machines.' + #13#10 + #13#10 +
+    'You can change this later by editing the GENIUZ_HOME environment variable.',
+    False, ''
+  );
+  DataDirPage.Add('');
+  DataDirPage.Values[0] := ExpandConstant('{userprofile}\.geniuz');
+end;
+
+function GetDataDir(Param: string): string;
+begin
+  Result := DataDirPage.Values[0];
+end;
+
 function NeedsAddPath(Param: string): Boolean;
 var
   OrigPath: string;
@@ -87,15 +133,17 @@ begin
   if CurUninstallStep = usUninstall then
   begin
     AppDir := ExpandConstant('{app}');
+    // PATH cleanup
     if RegQueryStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', OrigPath) then
     begin
-      // Remove ;AppDir from PATH (idempotent, case-insensitive).
-      // StringChangeEx mutates the var-string and returns Integer (count).
       NewPath := OrigPath;
       StringChangeEx(NewPath, ';' + AppDir, '', True);
       StringChangeEx(NewPath, AppDir + ';', '', True);
       StringChangeEx(NewPath, AppDir, '', True);
       RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', NewPath);
     end;
+    // Remove the GENIUZ_HOME pointer. We do NOT delete the data directory
+    // itself — user memories survive uninstall by design.
+    RegDeleteValue(HKEY_CURRENT_USER, 'Environment', 'GENIUZ_HOME');
   end;
 end;

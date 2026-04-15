@@ -345,14 +345,29 @@ fn geniuz_binary_path() -> String {
         .unwrap_or_else(|_| "geniuz".to_string())
 }
 
-pub fn install() -> Result<String, String> {
+/// Parse `KEY=VALUE` strings into a JSON object suitable for the MCP
+/// server entry's `env` block. Skips malformed entries with a warning.
+fn parse_env_args(env_args: &[String]) -> serde_json::Map<String, serde_json::Value> {
+    let mut env_map = serde_json::Map::new();
+    for entry in env_args {
+        if let Some((k, v)) = entry.split_once('=') {
+            env_map.insert(k.to_string(), serde_json::Value::String(v.to_string()));
+        } else {
+            eprintln!("[geniuz mcp install] Ignoring malformed --env (expected KEY=VALUE): {}", entry);
+        }
+    }
+    env_map
+}
+
+pub fn install(env_args: &[String]) -> Result<String, String> {
     let binary = geniuz_binary_path();
+    let env_map = parse_env_args(env_args);
     let paths = config_paths();
     let mut written = Vec::new();
     let mut errors = Vec::new();
 
     for config_file in &paths {
-        match install_to_path(config_file, &binary) {
+        match install_to_path(config_file, &binary, &env_map) {
             Ok(()) => written.push(config_file.clone()),
             Err(e) => errors.push(format!("{}: {}", config_file.display(), e)),
         }
@@ -406,7 +421,11 @@ pub fn install() -> Result<String, String> {
 
 /// Read-modify-write a single Claude Desktop config file: load existing JSON
 /// (or start fresh if absent), upsert the Geniuz MCP entry, write back.
-fn install_to_path(config_file: &std::path::Path, binary: &str) -> Result<(), String> {
+fn install_to_path(
+    config_file: &std::path::Path,
+    binary: &str,
+    env_map: &serde_json::Map<String, serde_json::Value>,
+) -> Result<(), String> {
     let mut config: serde_json::Value = if config_file.exists() {
         let content = std::fs::read_to_string(config_file)
             .map_err(|e| format!("read failed: {}", e))?;
@@ -423,10 +442,15 @@ fn install_to_path(config_file: &std::path::Path, binary: &str) -> Result<(), St
     if config.get("mcpServers").is_none() {
         config["mcpServers"] = serde_json::json!({});
     }
-    config["mcpServers"]["Geniuz"] = serde_json::json!({
+
+    let mut entry = serde_json::json!({
         "command": binary,
         "args": ["mcp", "serve"]
     });
+    if !env_map.is_empty() {
+        entry["env"] = serde_json::Value::Object(env_map.clone());
+    }
+    config["mcpServers"]["Geniuz"] = entry;
 
     let formatted = serde_json::to_string_pretty(&config)
         .map_err(|e| format!("serialize failed: {}", e))?;
