@@ -13,6 +13,12 @@ EXPORT_DIR="$DESKTOP/build/export"
 APP="$EXPORT_DIR/Geniuz.app"
 DMG="$DESKTOP/build/Geniuz.dmg"
 DMG_STAGING="$DESKTOP/build/dmg-staging"
+DMG_RW="$DESKTOP/build/Geniuz-rw.dmg"
+
+# Polish assets — dark background + orange-dot volume icon
+MAC_ASSETS="$ROOT/installer/mac"
+DMG_BG="$MAC_ASSETS/dmg-background.png"
+DMG_ICON="$MAC_ASSETS/VolumeIcon.icns"
 
 IDENTITY="Developer ID Application: Managed Ventures LLC (NT5SU826F4)"
 TEAM_ID="NT5SU826F4"
@@ -58,15 +64,69 @@ ditto -c -k --keepParent "$APP" "$APP_ZIP"
 xcrun notarytool submit "$APP_ZIP" --keychain-profile "$NOTARY_PROFILE" --wait
 xcrun stapler staple "$APP"
 
-echo "==> Step 7/8: Build DMG"
-rm -rf "$DMG_STAGING" "$DMG"
+echo "==> Step 7/8: Build DMG with custom layout (background + volume icon + icon positions)"
+rm -rf "$DMG_STAGING" "$DMG" "$DMG_RW"
 mkdir -p "$DMG_STAGING"
 cp -R "$APP" "$DMG_STAGING/"
 ln -s /Applications "$DMG_STAGING/Applications"
+mkdir -p "$DMG_STAGING/.background"
+cp "$DMG_BG" "$DMG_STAGING/.background/background.png"
+cp "$DMG_ICON" "$DMG_STAGING/.VolumeIcon.icns"
+
+# Build a read-write DMG so Finder can apply layout attributes, then convert to UDZO
 hdiutil create -volname "Geniuz" \
     -srcfolder "$DMG_STAGING" \
-    -ov -format UDZO \
-    "$DMG"
+    -ov -format UDRW \
+    -fs HFS+ \
+    "$DMG_RW"
+
+MOUNT_POINT="$(hdiutil attach -readwrite -noverify -noautoopen "$DMG_RW" | \
+    grep -E '^/dev/' | tail -1 | awk '{print $3}')"
+echo "    mounted at: $MOUNT_POINT"
+
+# Tell Finder to use the custom volume icon
+SetFile -a C "$MOUNT_POINT"
+
+# Give Finder time to register the new volume by name. Without this, the
+# AppleScript 'tell disk "Geniuz"' below fails with error -1728 because
+# Finder hasn't yet indexed the mount under that name.
+sleep 3
+
+# Apply Finder layout via AppleScript — icons positioned, toolbar hidden, background set
+osascript <<APPLESCRIPT
+delay 1
+tell application "Finder"
+    tell disk "Geniuz"
+        open
+        delay 1
+        set current view of container window to icon view
+        set toolbar visible of container window to false
+        set statusbar visible of container window to false
+        set the bounds of container window to {200, 200, 840, 600}
+        set theViewOptions to the icon view options of container window
+        set arrangement of theViewOptions to not arranged
+        set icon size of theViewOptions to 128
+        set background picture of theViewOptions to file ".background:background.png"
+        set position of item "Geniuz.app" of container window to {180, 180}
+        set position of item "Applications" of container window to {460, 180}
+        close
+        open
+        update without registering applications
+        delay 2
+        close
+    end tell
+end tell
+APPLESCRIPT
+
+# Let Finder persist the layout to disk before we unmount
+sync
+sleep 2
+
+hdiutil detach "$MOUNT_POINT"
+
+# Convert read-write DMG to compressed read-only (what ships)
+hdiutil convert "$DMG_RW" -format UDZO -imagekey zlib-level=9 -o "$DMG"
+rm -f "$DMG_RW"
 
 echo "==> Step 8/8: Sign + notarize DMG"
 codesign --force --timestamp --sign "$IDENTITY" "$DMG"
