@@ -28,6 +28,12 @@ required-features = ["tray"]
 default = []
 tray = ["dep:tray-icon", "dep:image", "dep:winit"]
 
+[build-dependencies]
+# Embed a Windows VersionInfo resource so Task Manager shows "Geniuz"
+# instead of "geniuz-tray.exe". Only runs on Windows builds; no-op
+# on Mac/Linux. Compile-time only; not in the shipped binary.
+winresource = "0.1"
+
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
