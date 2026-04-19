@@ -81,24 +81,35 @@ class GeniuzService: ObservableObject {
 
     // MARK: - CLI on PATH
 
-    /// Best-effort check: is there a geniuz executable at a conventional PATH location?
-    /// Under the sandbox, file checks outside the temp-exception scope (/Users) may
-    /// silently return false. That's acceptable — a false negative surfaces the
-    /// "Install CLI to Terminal" action, which the user can ignore if already installed.
+    /// Is `geniuz` resolvable on the user's actual PATH?
+    ///
+    /// Matches the shell's `which geniuz` semantics exactly — runs `/usr/bin/which`
+    /// as a subprocess against a shell-set PATH and checks the exit code. This is
+    /// more honest than iterating a candidate list: if the user's shell can't find
+    /// `geniuz`, the menu-bar affordance must appear regardless of whether a stale
+    /// binary exists at some path that isn't currently on PATH.
+    ///
+    /// Previous candidate-list implementation would return true for stale binaries
+    /// at `~/.geniuz/bin/geniuz` or similar that a prior install-script wrote but
+    /// the user's login-shell PATH doesn't include. That hid the affordance from
+    /// users who still needed it — false positive.
     func checkCliOnPath() -> Bool {
-        let candidates = [
-            "/usr/local/bin/geniuz",
-            "/opt/homebrew/bin/geniuz",
-            "\(realHome)/.local/bin/geniuz",
-            "\(realHome)/.geniuz/bin/geniuz",
-        ]
-        let fm = FileManager.default
-        for path in candidates {
-            if fm.isExecutableFile(atPath: path) {
-                return true
-            }
+        let task = Process()
+        task.launchPath = "/usr/bin/which"
+        task.arguments = ["geniuz"]
+        // Use login-shell PATH by invoking via shell; ensures we match what the
+        // user's Terminal actually sees, not the app's sandboxed environment.
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = Pipe()
+        do {
+            try task.run()
+            task.waitUntilExit()
+            return task.terminationStatus == 0
+        } catch {
+            NSLog("[geniuz-app] which geniuz failed to launch: %@", error.localizedDescription)
+            return false
         }
-        return false
     }
 
     /// Copies a ready-to-paste sudo command to the clipboard that symlinks the
