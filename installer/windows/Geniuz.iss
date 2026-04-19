@@ -13,10 +13,11 @@
 ; mkdir failure.
 
 #define MyAppName "Geniuz"
-#define MyAppVersion "1.0.5"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "Managed Ventures LLC"
 #define MyAppURL "https://geniuz.life"
 #define MyAppExeName "geniuz.exe"
+#define MyAppTrayExeName "geniuz-tray.exe"
 #define MyAppDescription "Your AI remembers now."
 
 [Setup]
@@ -56,6 +57,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Files]
 Source: "geniuz.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "geniuz-embed.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "geniuz-tray.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "Geniuz.ico"; DestDir: "{app}"; Flags: ignoreversion
 ; Bundled ONNX Runtime 1.22 (CPU-only) — shipped alongside the CLI so Windows
 ; never pulls an incompatible DirectML/onnxruntime.dll from System32. Same
@@ -77,6 +79,19 @@ Root: HKCU; Subkey: "Environment"; ValueType: expandsz; ValueName: "Path"; \
 ; where memories live without parsing the Claude Desktop config.
 Root: HKCU; Subkey: "Environment"; ValueType: expandsz; ValueName: "GENIUZ_HOME"; \
   ValueData: "{code:GetDataDir}"
+; Autostart the tray at login so Geniuz is an ambient presence — visible
+; immediately when the user signs in, without having to launch anything.
+; HKCU so it's per-user and no admin elevation needed.
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; \
+  ValueType: string; ValueName: "Geniuz"; \
+  ValueData: """{app}\{#MyAppTrayExeName}"""; \
+  Flags: uninsdeletevalue
+
+[Icons]
+; Start Menu entry — opens the tray if it's not running, otherwise harmless.
+; Users who quit the tray can re-launch from here.
+Name: "{userprograms}\Geniuz"; Filename: "{app}\{#MyAppTrayExeName}"; \
+  IconFilename: "{app}\Geniuz.ico"; Comment: "{#MyAppDescription}"
 
 [Run]
 ; Grant ALL APPLICATION PACKAGES (S-1-15-2-1) read+write on the data dir.
@@ -96,6 +111,13 @@ Filename: "{app}\{#MyAppExeName}"; \
   Parameters: "mcp install --env GENIUZ_HOME=""{code:GetDataDir}"""; \
   StatusMsg: "Configuring Claude Desktop integration..."; \
   Flags: runhidden
+
+; Launch the tray immediately so the user sees Geniuz appear as soon as
+; the installer finishes — not on next login. `nowait` because the tray
+; runs continuously; we don't want to block the installer.
+Filename: "{app}\{#MyAppTrayExeName}"; \
+  Description: "Launch Geniuz now"; \
+  Flags: postinstall nowait skipifsilent
 
 [Code]
 var
@@ -140,10 +162,14 @@ var
   OrigPath: string;
   AppDir: string;
   NewPath: string;
+  ResultCode: Integer;
 begin
   if CurUninstallStep = usUninstall then
   begin
     AppDir := ExpandConstant('{app}');
+    // Kill the running tray — otherwise we can't delete the running .exe
+    // and the user has a lingering process after uninstall completes.
+    Exec('taskkill.exe', '/F /IM geniuz-tray.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     // PATH cleanup
     if RegQueryStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', OrigPath) then
     begin
