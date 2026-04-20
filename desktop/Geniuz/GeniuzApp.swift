@@ -17,6 +17,9 @@ struct GeniuzApp: App {
             // Remove default "Preferences..." from the app menu; we have
             // no settings surface yet. Re-adding when real settings exist.
             CommandGroup(replacing: .appSettings) {}
+            // Remove Help menu entirely; "Help isn't available for Geniuz"
+            // is worse than no Help menu. Re-add when a Help Book exists.
+            CommandGroup(replacing: .help) {}
         }
     }
 }
