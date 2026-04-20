@@ -22,25 +22,7 @@ fn main() {
     }
 }
 
-/// User's home directory, cross-platform.
-/// On Windows this is %USERPROFILE% (HOME is not standard there).
-fn home_dir() -> PathBuf {
-    dirs::home_dir().unwrap_or_else(|| PathBuf::from("."))
-}
-
-/// Resolve the Geniuz data directory. Precedence:
-///   1. GENIUZ_HOME env var (set by the installer's directory picker, or by the user)
-///   2. ~/.geniuz on every platform
-///
-/// The data directory holds memory.db, the embedding model cache, and any other
-/// per-user state. The user can pick this location at install time so the dir
-/// is created in user context (no sandbox restrictions) and remains accessible
-/// from sandboxed Claude Desktop child processes.
-pub fn data_dir() -> PathBuf {
-    std::env::var("GENIUZ_HOME")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| home_dir().join(".geniuz"))
-}
+use geniuz::{home_dir, data_dir};
 
 fn default_db_path() -> PathBuf {
     data_dir().join("memory.db")

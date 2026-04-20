@@ -21,8 +21,7 @@ fn onnx_model_filename() -> &'static str {
 }
 
 fn default_models_dir() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(home).join(".geniuz").join("models")
+    crate::data_dir().join("models")
 }
 
 pub trait EmbeddingBackend {
