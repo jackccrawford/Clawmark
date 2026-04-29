@@ -14,10 +14,10 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            os: ubuntu-24.04
+            os: ubuntu-22.04
             name: linux-amd64
           - target: aarch64-unknown-linux-gnu
-            os: ubuntu-24.04
+            os: ubuntu-22.04
             name: linux-arm64
 
     runs-on: ${{ matrix.os }}
