@@ -28,6 +28,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem!
     var popover: NSPopover!
     var service: GeniuzService!
+    var globalEventMonitor: Any?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         service = GeniuzService()
@@ -45,6 +46,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentSize = NSSize(width: 280, height: 320)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(rootView: GeniuzMenu(service: service))
+
+        // NSPopover.transient is supposed to close when the user interacts
+        // outside the popover, but it has a long-standing gap with system
+        // status bar items: clicking another app's menu bar icon, or the
+        // dock, does not register as "outside" and the popover stays open.
+        // The global event monitor fires for mouse-down events in any
+        // *other* application, catching exactly what .transient misses.
+        // Clicks on Geniuz's own status item still go through togglePopover.
+        globalEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            guard let self = self, self.popover.isShown else { return }
+            self.popover.performClose(nil)
+        }
     }
 
     @objc func togglePopover() {

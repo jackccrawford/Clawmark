@@ -31,7 +31,7 @@ fn main() {
 
     // Edge cases worth seeing
     let edge_files = [
-        ("README.md (geniuz repo)",   "/Users/mars/Dev/Geniuz-windows-port/README.md"),
+        ("README.md (geniuz repo)",   "/Users/mars/Dev/geniuz/README.md"),
     ];
 
     println!("=== JUNK (should score LOW) ===");
