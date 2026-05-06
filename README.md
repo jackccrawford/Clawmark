@@ -25,7 +25,7 @@ Restart Claude Desktop. Your Claude now has three tools — **remember**, **reca
 
 *How did it know that?* That's Geniuz.
 
-[See the full Geniuz experience](https://agentdoor.ai/geniuz)
+[See the full Geniuz experience](https://geniuz.life)
 
 ### CLI for developers and agents
 
@@ -86,7 +86,9 @@ Mac users: this is the path to take if you plan to use `geniuz` from Terminal, o
 
 ### Windows — one click
 
-Download **[Geniuz-Setup.exe](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz-Setup.exe)**, double-click, accept the SmartScreen warning *(Authenticode cert procurement in progress)*, follow the wizard. Per-user install, no admin needed.
+Download **[Geniuz-Setup.exe](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz-Setup.exe)**, double-click, follow the wizard. Per-user install, no admin needed. Signed with an EV code signing certificate by Managed Ventures LLC.
+
+*If Windows shows a "Windows protected your PC" popup, that's SmartScreen reputation building for a brand-new publisher — not a security issue. Click "More info" → "Run anyway". Independent verification: [scanned clean by VirusTotal](https://www.virustotal.com/gui/file/4da08b2ab68201243ab9e7fc3dfc8ebccb7d05fc11c65aafac75027e1b29e6cf/detection) (0/70 engines).*
 
 Installs CLI to `%LOCALAPPDATA%\Programs\Geniuz\`, adds to PATH, wires Claude Desktop (both the `.exe` and Microsoft Store variants). Requires Windows 10 or 11. Pick your memory location in the wizard — default is `%USERPROFILE%\.geniuz\`.
 

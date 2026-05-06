@@ -20,6 +20,21 @@ cd path\to\staging-dir
 
 Output: `output\Geniuz-Setup.exe` (~13 MB, LZMA2 compressed).
 
+## Sign
+
+After the unsigned installer is built, sign it on a Mac with the YubiKey FIPS
+plugged in (EV cert provisioned to PIV slot 9A):
+
+```bash
+./sign-installer.sh output/Geniuz-Setup.exe
+```
+
+Signs in place. Prompts once for the YubiKey User PIN. Embeds an RFC 3161
+timestamp from `ts.ssl.com` so signatures remain valid past cert expiration.
+Result: Windows shows "Verified publisher: Managed Ventures LLC" and EV
+SmartScreen reputation lands immediately. See `sign-installer.sh` for env-var
+overrides (cert path, hash alg, description fields) and dependencies.
+
 ## What it does
 
 - Per-user install (no admin required)
