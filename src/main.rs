@@ -595,5 +595,27 @@ fn run(cli: Cli) -> Result<String, String> {
                 }
             }
         }
+
+        Command::Settings(settings_cmd) => {
+            use cli::SettingsCommand;
+            use geniuz::settings::Settings;
+            match settings_cmd {
+                SettingsCommand::List => {
+                    Ok(Settings::load().list())
+                }
+                SettingsCommand::Get { key } => {
+                    Settings::load().get(&key)
+                }
+                SettingsCommand::Set { key, value } => {
+                    let mut s = Settings::load();
+                    let stored = s.set(&key, &value)?;
+                    s.save()?;
+                    Ok(format!("{} = {}", key, stored))
+                }
+                SettingsCommand::Path => {
+                    Ok(Settings::path().display().to_string())
+                }
+            }
+        }
     }
 }

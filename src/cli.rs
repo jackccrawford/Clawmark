@@ -176,6 +176,34 @@ pub enum Command {
     /// MCP server for Claude Desktop — run, install, or check status
     #[command(subcommand)]
     Mcp(McpCommand),
+
+    /// User settings — read or change preferences
+    #[command(subcommand)]
+    Settings(SettingsCommand),
+}
+
+#[derive(Subcommand)]
+pub enum SettingsCommand {
+    /// Show all settings as `key = value` lines
+    List,
+
+    /// Print a single setting's value (for scripting)
+    Get {
+        /// Setting key (launch_at_login, autoupdate_enabled, update_check_frequency, recent_memories_count)
+        key: String,
+    },
+
+    /// Set a single setting and save
+    #[command(after_help = "Examples:\n  geniuz settings set autoupdate_enabled false\n  geniuz settings set update_check_frequency weekly\n  geniuz settings set recent_memories_count 10\n\nValid keys:\n  launch_at_login          true | false\n  autoupdate_enabled       true | false\n  update_check_frequency   daily | weekly | manual\n  recent_memories_count    non-negative integer")]
+    Set {
+        /// Setting key
+        key: String,
+        /// New value
+        value: String,
+    },
+
+    /// Print the path to the settings file
+    Path,
 }
 
 #[derive(Subcommand)]
