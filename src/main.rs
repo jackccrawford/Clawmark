@@ -600,8 +600,13 @@ fn run(cli: Cli) -> Result<String, String> {
             use cli::SettingsCommand;
             use geniuz::settings::Settings;
             match settings_cmd {
-                SettingsCommand::List => {
-                    Ok(Settings::load().list())
+                SettingsCommand::List { json } => {
+                    let s = Settings::load();
+                    if json {
+                        serde_json::to_string_pretty(&s).map_err(|e| format!("serialize: {}", e))
+                    } else {
+                        Ok(s.list())
+                    }
                 }
                 SettingsCommand::Get { key } => {
                     Settings::load().get(&key)

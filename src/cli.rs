@@ -184,8 +184,12 @@ pub enum Command {
 
 #[derive(Subcommand)]
 pub enum SettingsCommand {
-    /// Show all settings as `key = value` lines
-    List,
+    /// Show all settings as `key = value` lines (or JSON with --json)
+    List {
+        /// Output as JSON (used by GUIs that prefer structured input)
+        #[arg(long)]
+        json: bool,
+    },
 
     /// Print a single setting's value (for scripting)
     Get {
