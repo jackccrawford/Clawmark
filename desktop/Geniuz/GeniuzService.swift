@@ -388,9 +388,12 @@ class GeniuzService: ObservableObject {
             let view = GeniuzSettingsView(service: self)
             let hosting = NSHostingController(rootView: view)
             let window = NSWindow(contentViewController: hosting)
-            window.styleMask = [.titled, .closable]
+            window.styleMask = [.titled, .closable, .resizable]
             window.title = "Geniuz Settings"
-            window.setContentSize(NSSize(width: 380, height: 480))
+            // Initial size big enough for all four sections without scrolling.
+            // User can resize from here; minSize prevents shrinking past readable.
+            window.setContentSize(NSSize(width: 420, height: 600))
+            window.minSize = NSSize(width: 380, height: 320)
             window.center()
             window.isReleasedWhenClosed = false
             settingsWindowController = NSWindowController(window: window)

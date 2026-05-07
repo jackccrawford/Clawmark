@@ -264,7 +264,10 @@ struct GeniuzSettingsView: View {
         }
         .formStyle(.grouped)
         .padding(0)
-        .frame(width: 380, height: 460)
+        // minWidth/minHeight (not fixed frame) so the NSWindow's resizable
+        // styleMask can actually grow the content. The window's setContentSize
+        // dictates the initial frame; this binds the floor.
+        .frame(minWidth: 380, minHeight: 320)
     }
 
     // MARK: - Save-on-change bindings
