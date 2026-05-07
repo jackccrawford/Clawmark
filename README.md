@@ -62,7 +62,7 @@ Pick the path that matches your setup.
 
 ### Mac — one click (consumer path)
 
-Download **[Geniuz.dmg](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz.dmg)**, double-click, drag to Applications. Signed and notarized by Managed Ventures LLC — no Gatekeeper warnings. Independent verification: [scanned clean by VirusTotal](https://www.virustotal.com/gui/file/6d1c7551295595c46b93b198a17e117e0669e0d4848437807d9af2d2ea5dda0d/detection) (0/60 engines).
+Download **[Geniuz.dmg](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz.dmg)**, double-click, drag to Applications. Signed and notarized by Managed Ventures LLC — no Gatekeeper warnings. Independent verification: [scanned clean by VirusTotal](https://www.virustotal.com/gui/file/a5f8da0924d3dd2de90a0cab54cc3ade47e704c8729c6a8dd19506096982d01d/detection) (0/60 engines).
 
 Installs the menu bar app to `/Applications/Geniuz.app`. Launch it once; use the "Configure Claude Connection" button to wire up Claude Desktop. Requires macOS Sonoma (14) or later. Apple Silicon native; Intel Macs run via Rosetta 2 (universal binary coming in a near-term release).
 
