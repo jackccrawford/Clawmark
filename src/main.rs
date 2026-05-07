@@ -34,22 +34,17 @@ fn default_claw_workspace() -> PathBuf {
 
 pub fn get_db() -> Result<db::DatabaseManager, String> {
     // Precedence: GENIUZ_STATION (explicit DB file path) > GENIUZ_HOME-derived default
-    //             > legacy ~/.geniuz/station.db > legacy ~/.clawmark/station.db
+    //             > legacy ~/.geniuz/station.db
     let path = std::env::var("GENIUZ_STATION")
-        .or_else(|_| std::env::var("CLAWMARK_STATION"))
         .unwrap_or_else(|_| {
             let new_path = default_db_path();
             let geniuz_legacy = home_dir().join(".geniuz").join("station.db");
-            let clawmark_legacy = home_dir().join(".clawmark").join("station.db");
 
             if new_path.exists() {
                 new_path.to_string_lossy().to_string()
             } else if geniuz_legacy.exists() {
                 eprintln!("[geniuz] Using existing folder at ~/.geniuz/station.db");
                 geniuz_legacy.to_string_lossy().to_string()
-            } else if clawmark_legacy.exists() {
-                eprintln!("[geniuz] Using legacy folder at ~/.clawmark/station.db");
-                clawmark_legacy.to_string_lossy().to_string()
             } else {
                 new_path.to_string_lossy().to_string()
             }
@@ -570,7 +565,6 @@ fn run(cli: Cli) -> Result<String, String> {
             let signals = db.count()?;
             let embeddings = db.embedding_count()?;
             let path = std::env::var("GENIUZ_STATION")
-                .or_else(|_| std::env::var("CLAWMARK_STATION"))
                 .unwrap_or_else(|_| default_db_path().to_string_lossy().to_string());
 
             let mut lines = vec![
