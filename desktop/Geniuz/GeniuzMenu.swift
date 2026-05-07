@@ -6,13 +6,20 @@ struct GeniuzMenu: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
-            HStack {
+            HStack(spacing: 8) {
                 Text("Geniuz")
                     .font(.headline)
                 Spacer()
                 Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.0")")
                     .font(.caption)
                     .foregroundColor(.secondary)
+                Button(action: { service.openSettings() }) {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Settings")
             }
             .padding(.horizontal, 16)
             .padding(.top, 12)
@@ -31,7 +38,7 @@ struct GeniuzMenu: View {
                             .font(.system(.body, design: .rounded))
                     }
 
-                    if !service.recentGists.isEmpty {
+                    if !service.recentGists.isEmpty && service.settings.recentMemoriesCount > 0 {
                         recentMemoriesSection
                             .padding(.top, 6)
                     }
@@ -170,9 +177,14 @@ struct GeniuzMenu: View {
             }
             .buttonStyle(.plain)
 
+            // Settings can hide the section entirely (count = 0) or cap how
+            // many gists appear when expanded. Collapsed view always shows
+            // at most 1 to keep the menubar height small; if the user set
+            // count = 0, both modes show 0.
+            let count = max(0, service.settings.recentMemoriesCount)
             let visible = service.recentExpanded
-                ? Array(service.recentGists.prefix(5))
-                : Array(service.recentGists.prefix(1))
+                ? Array(service.recentGists.prefix(count))
+                : Array(service.recentGists.prefix(min(1, count)))
 
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(Array(visible.enumerated()), id: \.offset) { _, gist in
@@ -189,5 +201,99 @@ struct GeniuzMenu: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Settings window
+//
+// Opened via the gear icon in the GeniuzMenu header. Save-on-change UX
+// (Mac convention) — every Toggle/Picker/Stepper writes through to
+// settings.json on the spot, no Apply/Cancel buttons. The window is
+// reused across opens; closing just hides it.
+//
+// Platform-side enforcement (LaunchAgent for launch_at_login, Sparkle
+// for autoupdate) is wired up in subsequent commits — for now the JSON
+// is the truth and a future reconciliation pass will sync the
+// LaunchAgent / Sparkle preference state to match.
+
+struct GeniuzSettingsView: View {
+    @ObservedObject var service: GeniuzService
+
+    var body: some View {
+        Form {
+            Section("General") {
+                Toggle("Launch at login", isOn: launchAtLoginBinding)
+                Toggle("Check for updates automatically", isOn: autoupdateBinding)
+                Picker("Update frequency", selection: frequencyBinding) {
+                    Text("Daily").tag("daily")
+                    Text("Weekly").tag("weekly")
+                    Text("Manually only").tag("manual")
+                }
+                .disabled(!service.settings.autoupdateEnabled)
+            }
+
+            Section("Display") {
+                Stepper(
+                    "Recent memories shown: \(service.settings.recentMemoriesCount)",
+                    value: recentCountBinding,
+                    in: 0...20
+                )
+                Text("Set to 0 to hide the recent memories section in the menu.")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+
+            Section("Storage") {
+                LabeledContent("Folder") {
+                    Text(service.dataDir)
+                        .font(.system(.caption, design: .monospaced))
+                        .textSelection(.enabled)
+                        .multilineTextAlignment(.trailing)
+                }
+                Text("Override by setting GENIUZ_HOME in your shell profile, then restart Geniuz.")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+
+            Section("About") {
+                LabeledContent("Version") {
+                    Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")
+                        .font(.system(.caption, design: .monospaced))
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .padding(0)
+        .frame(width: 380, height: 460)
+    }
+
+    // MARK: - Save-on-change bindings
+
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { service.settings.launchAtLogin },
+            set: { v in service.updateSettings { $0.launchAtLogin = v } }
+        )
+    }
+
+    private var autoupdateBinding: Binding<Bool> {
+        Binding(
+            get: { service.settings.autoupdateEnabled },
+            set: { v in service.updateSettings { $0.autoupdateEnabled = v } }
+        )
+    }
+
+    private var frequencyBinding: Binding<String> {
+        Binding(
+            get: { service.settings.updateCheckFrequency },
+            set: { v in service.updateSettings { $0.updateCheckFrequency = v } }
+        )
+    }
+
+    private var recentCountBinding: Binding<Int> {
+        Binding(
+            get: { service.settings.recentMemoriesCount },
+            set: { v in service.updateSettings { $0.recentMemoriesCount = v } }
+        )
     }
 }
