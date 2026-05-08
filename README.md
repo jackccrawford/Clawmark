@@ -62,7 +62,7 @@ Pick the path that matches your setup.
 
 ### Mac — one click (consumer path)
 
-Download **[Geniuz.dmg](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz.dmg)**, double-click, drag to Applications. Signed and notarized by Managed Ventures LLC — no Gatekeeper warnings. Independent verification: [scanned clean by VirusTotal](https://www.virustotal.com/gui/file/a5f8da0924d3dd2de90a0cab54cc3ade47e704c8729c6a8dd19506096982d01d/detection) (0/60 engines).
+Download **[Geniuz.dmg](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz.dmg)**, double-click, drag to Applications. Signed and notarized by Managed Ventures LLC — no Gatekeeper warnings. Independent verification: [scanned clean by VirusTotal](https://www.virustotal.com/gui/file/b1722191df490c502de79a42962fa87a7703f9880b823bdba95d85313debbcc8/detection) (0/60 engines).
 
 Installs the menu bar app to `/Applications/Geniuz.app`. Launch it once; use the "Configure Claude Connection" button to wire up Claude Desktop. Requires macOS Sonoma (14) or later. Apple Silicon native; Intel Macs run via Rosetta 2 (universal binary coming in a near-term release).
 
@@ -88,7 +88,7 @@ Mac users: this is the path to take if you plan to use `geniuz` from Terminal, o
 
 Download **[Geniuz-Setup.exe](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz-Setup.exe)**, double-click, follow the wizard. Per-user install, no admin needed. Signed with an EV code signing certificate by Managed Ventures LLC.
 
-*If Windows shows a "Windows protected your PC" popup, that's SmartScreen reputation building for a brand-new publisher — not a security issue. Click "More info" → "Run anyway". Independent verification: [scanned clean by VirusTotal](https://www.virustotal.com/gui/file/b9b8ecb2a7b4ac267f38f39787f71891f0c8b9449021927aee9ca6bf1b7cf039/detection) (0/70 engines).*
+*If Windows shows a "Windows protected your PC" popup, that's SmartScreen reputation building for a brand-new publisher — not a security issue. Click "More info" → "Run anyway". Independent verification: [scanned clean by VirusTotal](https://www.virustotal.com/gui/file/8654f3d9991f02167f2bfaf3895e13c191cf6c6c58eba057f049fcc6dbe8c2e5/detection) (0/71 engines).*
 
 Installs CLI to `%LOCALAPPDATA%\Programs\Geniuz\`, adds to PATH, wires Claude Desktop (both the `.exe` and Microsoft Store variants). Requires Windows 10 or 11. Pick your memory location in the wizard — default is `%USERPROFILE%\.geniuz\`.
 
