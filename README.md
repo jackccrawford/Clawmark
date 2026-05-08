@@ -88,7 +88,7 @@ Mac users: this is the path to take if you plan to use `geniuz` from Terminal, o
 
 Download **[Geniuz-Setup.exe](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz-Setup.exe)**, double-click, follow the wizard. Per-user install, no admin needed. Signed with an EV code signing certificate by Managed Ventures LLC.
 
-*If Windows shows a "Windows protected your PC" popup, that's SmartScreen reputation building for a brand-new publisher — not a security issue. Click "More info" → "Run anyway". Independent verification: [scanned clean by VirusTotal](https://www.virustotal.com/gui/file/4da08b2ab68201243ab9e7fc3dfc8ebccb7d05fc11c65aafac75027e1b29e6cf/detection) (0/70 engines).*
+*If Windows shows a "Windows protected your PC" popup, that's SmartScreen reputation building for a brand-new publisher — not a security issue. Click "More info" → "Run anyway". Independent verification: [scanned clean by VirusTotal](https://www.virustotal.com/gui/file/b9b8ecb2a7b4ac267f38f39787f71891f0c8b9449021927aee9ca6bf1b7cf039/detection) (0/70 engines).*
 
 Installs CLI to `%LOCALAPPDATA%\Programs\Geniuz\`, adds to PATH, wires Claude Desktop (both the `.exe` and Microsoft Store variants). Requires Windows 10 or 11. Pick your memory location in the wizard — default is `%USERPROFILE%\.geniuz\`.
 
