@@ -76,12 +76,16 @@ impl Status {
         } else {
             format!("{} memories", self.memory_count)
         };
-        let claude = if self.claude_configured {
-            "Claude Desktop connected"
-        } else {
-            "Claude Desktop not configured"
-        };
-        format!("Geniuz — {} · {}", mem, claude)
+        // Two-line tooltip: identity + count on top, most-recent gist on bottom.
+        // Connection status moved to the menu (popup) where it belongs — tooltip
+        // is for the pulse the user actually wants on every glance.
+        match self.recent_gists.first() {
+            Some(g) => {
+                let g = truncate_for_menu(g, 100);
+                format!("Geniuz · {}\n{}", mem, g)
+            }
+            None => format!("Geniuz · {}", mem),
+        }
     }
 }
 

@@ -40,12 +40,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             button.image?.isTemplate = true
             button.action = #selector(togglePopover)
             button.target = self
+            button.toolTip = service.tooltipText()
         }
 
         popover = NSPopover()
         popover.contentSize = NSSize(width: 280, height: 320)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(rootView: GeniuzMenu(service: service))
+
+        // Refresh the tooltip whenever the service publishes new state so
+        // hover always reflects the latest count + most-recent gist.
+        service.onStateChange = { [weak self] in
+            self?.statusItem.button?.toolTip = self?.service.tooltipText()
+        }
 
         // NSPopover.transient is supposed to close when the user interacts
         // outside the popover, but it has a long-standing gap with system

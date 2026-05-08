@@ -49,6 +49,22 @@ class GeniuzService: ObservableObject {
     @Published var cliCopyConfirmation: Bool = false
     @Published var settings: GeniuzSettings = GeniuzSettings()
 
+    /// Optional callback fired after each state refresh so non-SwiftUI surfaces
+    /// (the NSStatusItem button tooltip) can re-read derived strings.
+    var onStateChange: (() -> Void)?
+
+    /// Tooltip text shown on hover of the menu-bar icon.
+    /// Matches the Windows tray.rs format: identity + count, then the
+    /// most-recent gist on a second line if any. Connection status is
+    /// intentionally excluded — it lives in the popover.
+    func tooltipText() -> String {
+        let mem = memoryCount == 1 ? "1 memory" : "\(memoryCount) memories"
+        let head = "Geniuz · \(mem)"
+        guard let g = recentGists.first, !g.isEmpty else { return head }
+        let truncated = g.count > 100 ? String(g.prefix(100)) + "…" : g
+        return "\(head)\n\(truncated)"
+    }
+
     private var timer: Timer?
     private var claudeAtConfigureTime: Set<pid_t> = []
     private var claudeSeenAfterConfigure: Set<pid_t> = []
@@ -127,6 +143,7 @@ class GeniuzService: ObservableObject {
                 self.mcpInstalled = mcp
                 self.cliOnPath = onPath
                 self.settings = s
+                self.onStateChange?()
             }
         }
     }
