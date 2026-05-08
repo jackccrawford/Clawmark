@@ -5,95 +5,19 @@ struct GeniuzMenu: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header
-            HStack(spacing: 8) {
-                Text("Geniuz")
-                    .font(.headline)
-                Spacer()
-                Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.0")")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Button(action: { service.openSettings() }) {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 13))
-                        .foregroundColor(.secondary)
-                }
-                .buttonStyle(.plain)
-                .help("Settings")
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
-            .padding(.bottom, 8)
-
+            header
             Divider()
 
-            // Status
-            VStack(alignment: .leading, spacing: 6) {
-                if service.stationExists {
-                    HStack(spacing: 6) {
-                        Image(systemName: "circle.fill")
-                            .font(.system(size: 6))
-                            .foregroundColor(.green)
-                        Text("\(service.memoryCount) memories")
-                            .font(.system(.body, design: .rounded))
-                    }
-
-                    if !service.recentGists.isEmpty && service.settings.recentMemoriesCount > 0 {
-                        recentMemoriesSection
-                            .padding(.top, 6)
-                    }
-                } else {
-                    HStack(spacing: 6) {
-                        Image(systemName: "circle.fill")
-                            .font(.system(size: 6))
-                            .foregroundColor(.secondary)
-                        Text("No memories yet")
-                            .foregroundColor(.secondary)
-                    }
-                    Text("Start a conversation in Claude Desktop. Say something worth remembering.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.top, 2)
-                }
+            if service.stationExists {
+                statsHero
+                Divider()
+                recentMemoriesList
+            } else {
+                emptyState
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
 
             Divider()
-
-            // Claude Desktop status
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
-                    Image(systemName: service.mcpInstalled ? "checkmark.circle.fill" : "xmark.circle")
-                        .foregroundColor(service.mcpInstalled ? .green : .orange)
-                    Text(service.mcpInstalled ? "Claude Desktop connected" : "Claude Desktop not configured")
-                        .font(.caption)
-                }
-
-                if !service.mcpInstalled {
-                    Button("Configure Claude Connection") {
-                        service.configureClaudeConnection()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
-                    .tint(.orange)
-                }
-
-                if service.mcpInstalled && service.restartRequired {
-                    HStack(alignment: .top, spacing: 6) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.yellow)
-                            .font(.caption)
-                        Text("Restart Claude Desktop to activate Geniuz.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(.top, 2)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            connectionStatus
 
             if !service.cliOnPath {
                 Divider()
@@ -101,20 +25,252 @@ struct GeniuzMenu: View {
             }
 
             Divider()
-
-            Button(action: { NSApplication.shared.terminate(nil) }) {
-                Label("Quit Geniuz", systemImage: "power")
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 6)
-            .padding(.bottom, 4)
+            quitRow
         }
-        .frame(width: 280)
+        .frame(width: 360)
         .background(.regularMaterial)
     }
 
-    // MARK: - CLI install section
+    // MARK: - Header
+
+    private var header: some View {
+        HStack(spacing: 10) {
+            Image("MenuBarIcon")
+                .resizable()
+                .renderingMode(.template)
+                .foregroundColor(.accentColor)
+                .frame(width: 18, height: 18)
+
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Geniuz")
+                    .font(.system(size: 14, weight: .semibold))
+                Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0")")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+
+            Button(action: { service.openSettings() }) {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 13))
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("Settings")
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 10)
+    }
+
+    // MARK: - Stats hero
+
+    private var statsHero: some View {
+        HStack(spacing: 18) {
+            statTile(value: formattedCount(service.memoryCount), label: service.memoryCount == 1 ? "memory" : "memories")
+            divider
+            statTile(value: "+\(service.addedToday)", label: "today")
+            divider
+            statTile(value: "\(service.threadCount)", label: service.threadCount == 1 ? "thread" : "threads")
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color.accentColor.opacity(0.10),
+                    Color.accentColor.opacity(0.04)
+                ],
+                startPoint: .topLeading, endPoint: .bottomTrailing
+            )
+        )
+    }
+
+    private func statTile(value: String, label: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value)
+                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                .foregroundColor(.primary)
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(Color.secondary.opacity(0.18))
+            .frame(width: 1, height: 28)
+    }
+
+    // MARK: - Empty state (no station yet)
+
+    private var emptyState: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: "circle.fill")
+                    .font(.system(size: 6))
+                    .foregroundColor(.secondary)
+                Text("No memories yet")
+                    .foregroundColor(.secondary)
+            }
+            Text("Start a conversation in Claude Desktop. Say something worth remembering.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 2)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    // MARK: - Recent memories with threading viz
+
+    private var recentMemoriesList: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Section label, with a chevron when there's something to expand into.
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    service.recentExpanded.toggle()
+                }
+            }) {
+                HStack(spacing: 4) {
+                    Text("RECENT")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(.secondary)
+                        .tracking(0.5)
+                    Spacer()
+                    if service.settings.recentMemoriesCount > 1 {
+                        Image(systemName: service.recentExpanded ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 16)
+            .padding(.top, 10)
+            .padding(.bottom, 6)
+
+            // Visible items: when collapsed, show 1 (regardless of setting > 0); when
+            // expanded, honor the user's recent_memories_count cap.
+            let cap = max(0, service.settings.recentMemoriesCount)
+            let visible: [GeniuzService.RecentMemory] = service.recentExpanded
+                ? Array(service.recentMemories.prefix(cap))
+                : Array(service.recentMemories.prefix(min(1, cap)))
+
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(visible) { m in
+                    memoryRow(m)
+                }
+            }
+            .padding(.bottom, 8)
+        }
+    }
+
+    /// One recent-memory row. Threading is signaled by a left-side connector
+    /// elbow and a slight gist-color demotion for follow-ups.
+    private func memoryRow(_ m: GeniuzService.RecentMemory) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            if m.isThreadFollowup {
+                // Connector elbow: a thin teal L on the left margin signals "this is a follow-up."
+                ZStack(alignment: .topLeading) {
+                    Path { p in
+                        p.move(to: CGPoint(x: 5, y: 0))
+                        p.addLine(to: CGPoint(x: 5, y: 8))
+                        p.addQuadCurve(to: CGPoint(x: 11, y: 14), control: CGPoint(x: 5, y: 14))
+                    }
+                    .stroke(Color.accentColor.opacity(0.5), lineWidth: 1)
+                    .frame(width: 14, height: 18)
+                    Circle()
+                        .fill(Color.accentColor.opacity(0.55))
+                        .frame(width: 4, height: 4)
+                        .offset(x: 14, y: 12)
+                }
+                .frame(width: 22, height: 18)
+                .padding(.top, 0)
+            } else {
+                Circle()
+                    .fill(Color.accentColor)
+                    .frame(width: 5, height: 5)
+                    .padding(.leading, 4)
+                    .padding(.top, 7)
+                    .frame(width: 22, alignment: .leading)
+            }
+
+            Text(m.gist)
+                .font(.system(size: 12))
+                .foregroundColor(m.isThreadFollowup ? .secondary : .primary)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 1)
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 4)
+    }
+
+    // MARK: - Connection status (footer row above Quit)
+
+    private var connectionStatus: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Image(systemName: service.mcpInstalled ? "checkmark.circle.fill" : "xmark.circle")
+                    .foregroundColor(service.mcpInstalled ? .green : .orange)
+                    .font(.system(size: 13))
+                Text(service.mcpInstalled ? "Claude Desktop connected" : "Claude Desktop not configured")
+                    .font(.system(size: 12))
+                    .foregroundColor(.primary)
+                Spacer()
+            }
+
+            if !service.mcpInstalled {
+                Button("Configure Claude Connection") {
+                    service.configureClaudeConnection()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .tint(.orange)
+            }
+
+            if service.mcpInstalled && service.restartRequired {
+                HStack(alignment: .top, spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.yellow)
+                        .font(.caption)
+                    Text("Restart Claude Desktop to activate Geniuz.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+    }
+
+    // MARK: - Quit row (Mac convention: last menu-style item)
+
+    private var quitRow: some View {
+        Button(action: { NSApplication.shared.terminate(nil) }) {
+            HStack(spacing: 8) {
+                Image(systemName: "power")
+                    .font(.system(size: 12))
+                Text("Quit Geniuz")
+                    .font(.system(size: 12))
+                Spacer()
+            }
+            .foregroundColor(.secondary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - CLI install section (kept from prior layout)
 
     private var cliInstallSection: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -155,52 +311,12 @@ struct GeniuzMenu: View {
         .padding(.vertical, 8)
     }
 
-    // MARK: - Recent memories section
+    // MARK: - Helpers
 
-    private var recentMemoriesSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    service.recentExpanded.toggle()
-                }
-            }) {
-                HStack(spacing: 4) {
-                    Text("RECENT MEMORIES")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                        .textCase(.uppercase)
-                    Spacer()
-                    Image(systemName: service.recentExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(.secondary)
-                }
-            }
-            .buttonStyle(.plain)
-
-            // Settings can hide the section entirely (count = 0) or cap how
-            // many gists appear when expanded. Collapsed view always shows
-            // at most 1 to keep the menubar height small; if the user set
-            // count = 0, both modes show 0.
-            let count = max(0, service.settings.recentMemoriesCount)
-            let visible = service.recentExpanded
-                ? Array(service.recentGists.prefix(count))
-                : Array(service.recentGists.prefix(min(1, count)))
-
-            VStack(alignment: .leading, spacing: 6) {
-                ForEach(Array(visible.enumerated()), id: \.offset) { _, gist in
-                    HStack(alignment: .top, spacing: 8) {
-                        Image(systemName: "circle.fill")
-                            .font(.system(size: 4))
-                            .foregroundColor(.secondary)
-                            .padding(.top, 5)
-                        Text(gist)
-                            .font(.caption)
-                            .lineLimit(2)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-            }
-        }
+    private func formattedCount(_ n: Int) -> String {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        return f.string(from: NSNumber(value: n)) ?? "\(n)"
     }
 }
 
@@ -210,11 +326,6 @@ struct GeniuzMenu: View {
 // (Mac convention) — every Toggle/Picker/Stepper writes through to
 // settings.json on the spot, no Apply/Cancel buttons. The window is
 // reused across opens; closing just hides it.
-//
-// Platform-side enforcement (LaunchAgent for launch_at_login, Sparkle
-// for autoupdate) is wired up in subsequent commits — for now the JSON
-// is the truth and a future reconciliation pass will sync the
-// LaunchAgent / Sparkle preference state to match.
 
 struct GeniuzSettingsView: View {
     @ObservedObject var service: GeniuzService
@@ -264,9 +375,6 @@ struct GeniuzSettingsView: View {
         }
         .formStyle(.grouped)
         .padding(0)
-        // minWidth/minHeight (not fixed frame) so the NSWindow's resizable
-        // styleMask can actually grow the content. The window's setContentSize
-        // dictates the initial frame; this binds the floor.
         .frame(minWidth: 380, minHeight: 320)
     }
 

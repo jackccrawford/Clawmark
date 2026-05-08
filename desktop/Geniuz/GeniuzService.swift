@@ -40,7 +40,10 @@ struct GeniuzSettings: Codable, Equatable {
 
 class GeniuzService: ObservableObject {
     @Published var memoryCount: Int = 0
+    @Published var addedToday: Int = 0
+    @Published var threadCount: Int = 0
     @Published var recentGists: [String] = []
+    @Published var recentMemories: [RecentMemory] = []
     @Published var mcpInstalled: Bool = false
     @Published var stationExists: Bool = false
     @Published var recentExpanded: Bool = false
@@ -139,6 +142,9 @@ class GeniuzService: ObservableObject {
             DispatchQueue.main.async {
                 self.stationExists = station.exists
                 self.memoryCount = station.memories
+                self.addedToday = station.addedToday
+                self.threadCount = station.threads
+                self.recentMemories = station.recentMemories
                 self.recentGists = station.recentGists
                 self.mcpInstalled = mcp
                 self.cliOnPath = onPath
@@ -243,10 +249,27 @@ class GeniuzService: ObservableObject {
 
     // MARK: - Direct SQLite station read
 
+    /// One memory tuple as displayed in the popover.
+    /// `parentUuid == uuid` for root memories (per the relay/Geniuz convention),
+    /// or different for follow-ups; the menu uses this to render threading.
+    struct RecentMemory: Identifiable, Equatable {
+        let id: String           // memory_uuid
+        let gist: String
+        let parentUuid: String?  // nil only when the row stored NULL; populated rows match the convention
+        var isThreadFollowup: Bool {
+            // A follow-up has a parent and that parent isn't itself.
+            guard let p = parentUuid else { return false }
+            return p != id
+        }
+    }
+
     private struct StationInfo {
         var exists: Bool = false
         var memories: Int = 0
-        var recentGists: [String] = []
+        var addedToday: Int = 0
+        var threads: Int = 0
+        var recentMemories: [RecentMemory] = []
+        var recentGists: [String] = []  // legacy, kept so existing call sites compile
     }
 
     private func readStation() -> StationInfo {
@@ -276,20 +299,51 @@ class GeniuzService: ObservableObject {
         }
         sqlite3_finalize(stmt)
 
-        // Recent memories — gist text only. Fetch up to 20 to give the
-        // settings UI headroom (recent_memories_count caps display, not fetch).
-        let sql = "SELECT COALESCE(json_extract(payload, '$.gist'), substr(json_extract(payload, '$.content'), 1, 100)) FROM memories ORDER BY created_at DESC LIMIT 20"
-        if sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK {
-            while sqlite3_step(stmt) == SQLITE_ROW {
-                if let cStr = sqlite3_column_text(stmt, 0) {
-                    info.recentGists.append(String(cString: cStr))
-                }
+        // Added today — created in the last 24h. Tooltips/popover both want this.
+        if sqlite3_prepare_v2(db,
+            "SELECT COUNT(*) FROM memories WHERE datetime(created_at) > datetime('now', '-24 hours')",
+            -1, &stmt, nil) == SQLITE_OK {
+            if sqlite3_step(stmt) == SQLITE_ROW {
+                info.addedToday = Int(sqlite3_column_int(stmt, 0))
             }
         }
         sqlite3_finalize(stmt)
 
-        NSLog("[geniuz-app] station: %d memories, %d recent gists",
-              info.memories, info.recentGists.count)
+        // Thread count — memories that are roots (uuid = parent_uuid) AND have at least one child.
+        // Equivalent: distinct parent_uuid values where parent_uuid != memory_uuid.
+        if sqlite3_prepare_v2(db,
+            "SELECT COUNT(DISTINCT parent_uuid) FROM memories WHERE parent_uuid IS NOT NULL AND parent_uuid <> memory_uuid",
+            -1, &stmt, nil) == SQLITE_OK {
+            if sqlite3_step(stmt) == SQLITE_ROW {
+                info.threads = Int(sqlite3_column_int(stmt, 0))
+            }
+        }
+        sqlite3_finalize(stmt)
+
+        // Recent memories with parent UUID for threading viz. Fetch up to 20 to give
+        // the settings UI headroom (recent_memories_count caps display, not fetch).
+        let sql = """
+            SELECT memory_uuid,
+                   COALESCE(json_extract(payload, '$.gist'),
+                            substr(json_extract(payload, '$.content'), 1, 100)),
+                   parent_uuid
+            FROM memories
+            ORDER BY created_at DESC
+            LIMIT 20
+        """
+        if sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK {
+            while sqlite3_step(stmt) == SQLITE_ROW {
+                let id = sqlite3_column_text(stmt, 0).map { String(cString: $0) } ?? ""
+                let gist = sqlite3_column_text(stmt, 1).map { String(cString: $0) } ?? ""
+                let parent = sqlite3_column_text(stmt, 2).map { String(cString: $0) }
+                info.recentMemories.append(RecentMemory(id: id, gist: gist, parentUuid: parent))
+                info.recentGists.append(gist)
+            }
+        }
+        sqlite3_finalize(stmt)
+
+        NSLog("[geniuz-app] station: %d memories, +%d today, %d threads, %d recent",
+              info.memories, info.addedToday, info.threads, info.recentMemories.count)
         return info
     }
 
