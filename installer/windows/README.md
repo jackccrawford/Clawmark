@@ -10,8 +10,9 @@ Requires Inno Setup 6+ (`ISCC.exe`). Easiest install on Windows:
 choco install innosetup -y
 ```
 
-Then from this directory, with `geniuz.exe` and `geniuz-embed.exe` from
-`target/x86_64-pc-windows-msvc/release/` copied alongside `Geniuz.iss`:
+Then from this directory, with `geniuz.exe`, `geniuz-embed.exe`, and
+`geniuz-tray.exe` from `target/x86_64-pc-windows-msvc/release/` copied
+alongside `Geniuz.iss` — **after** they've been signed (see Sign step 1):
 
 ```powershell
 cd path\to\staging-dir
@@ -22,8 +23,28 @@ Output: `output\Geniuz-Setup.exe` (~13 MB, LZMA2 compressed).
 
 ## Sign
 
-After the unsigned installer is built, sign it on a Mac with the YubiKey FIPS
-plugged in (EV cert provisioned to PIV slot 9A):
+Dual-signing: the three inner binaries are signed **before** Inno Setup
+bundles them, and the outer `Geniuz-Setup.exe` is signed **after** ISCC
+produces it. Both passes happen on Mac with the YubiKey FIPS plugged in
+(EV cert in PIV slot 9A). The inner-binary pass closes the gap where
+Windows would otherwise trigger fresh warnings the first time a user
+launches `geniuz.exe` or the tray app after installation.
+
+**Step 1 — sign inner binaries (on Mac, before transferring to Windows):**
+
+```bash
+./sign-binaries.sh /path/to/staging-dir
+```
+
+The staging dir holds the unsigned cross-compiled `.exe` files from
+`target/x86_64-pc-windows-msvc/release/`. The helper signs all three in
+place via `sign-installer.sh`. Prompts once per binary for the YubiKey
+User PIN (three total).
+
+**Step 2 — bundle on Windows:** see the `ISCC.exe` command above. ISCC
+packs the now-signed inner binaries into `output\Geniuz-Setup.exe`.
+
+**Step 3 — sign the outer installer (back on Mac):**
 
 ```bash
 ./sign-installer.sh output/Geniuz-Setup.exe
@@ -31,9 +52,19 @@ plugged in (EV cert provisioned to PIV slot 9A):
 
 Signs in place. Prompts once for the YubiKey User PIN. Embeds an RFC 3161
 timestamp from `ts.ssl.com` so signatures remain valid past cert expiration.
-Result: Windows shows "Verified publisher: Managed Ventures LLC" and EV
-SmartScreen reputation lands immediately. See `sign-installer.sh` for env-var
-overrides (cert path, hash alg, description fields) and dependencies.
+Result: the installer AND every inner binary are signed. Windows shows
+"Verified publisher: Managed Ventures LLC" on the installer; inner binaries
+don't trigger fresh warnings on first launch. See `sign-installer.sh` for
+env-var overrides (cert path, hash alg, description fields) and dependencies.
+
+## Trusted Signing (future)
+
+`sign-installer-trustedsigning.sh` is the parallel signing script that uses
+Azure Trusted Signing instead of the YubiKey — no hardware token required;
+signs over a cloud HSM via API. Currently idle, waiting on Microsoft Identity
+Validation to complete. When IV finishes and a certificate profile is created,
+the daily-build flow can switch tools (same three-step dual-sign shape, same
+input/output) without changing the Inno Setup pipeline.
 
 ## What it does
 
