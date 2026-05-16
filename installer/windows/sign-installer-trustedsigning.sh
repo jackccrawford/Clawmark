@@ -22,8 +22,8 @@
 set -euo pipefail
 
 # --- Tunables (override via env if needed) ---
-TS_ENDPOINT="${GENIUZ_TS_ENDPOINT:-https://eus.codesigning.azure.net/}"
-TS_ACCOUNT="${GENIUZ_TS_ACCOUNT:-ManagedVenturesLLC}"
+TS_ENDPOINT="${GENIUZ_TS_ENDPOINT:-https://wus2.codesigning.azure.net}"
+TS_ACCOUNT="${GENIUZ_TS_ACCOUNT:-MVLLC}"
 TS_PROFILE="${GENIUZ_TS_PROFILE:-geniuz-free-prod}"
 TIMESTAMP_URL="${GENIUZ_SIGN_TIMESTAMP_URL:-http://timestamp.acs.microsoft.com/}"
 DESCRIPTION="${GENIUZ_SIGN_DESCRIPTION:-Geniuz}"
@@ -113,6 +113,7 @@ jsign \
   --storepass "$AZURE_ACCESS_TOKEN" \
   --alias "$TS_ACCOUNT/$TS_PROFILE" \
   --tsaurl "$TIMESTAMP_URL" \
+  --tsmode RFC3161 \
   --name "$DESCRIPTION" \
   --url "$INFO_URL" \
   "$TARGET"
