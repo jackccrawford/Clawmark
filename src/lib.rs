@@ -32,3 +32,21 @@ pub fn data_dir() -> PathBuf {
         .map(PathBuf::from)
         .unwrap_or_else(|_| home_dir().join(".geniuz"))
 }
+
+/// Platform-specific path where Claude Desktop stores its MCP server
+/// configuration. The dashboard's Status surface reads this file to verify
+/// whether Geniuz is wired into Claude Desktop as an MCP server.
+///
+/// Returns None on unsupported platforms (Linux has no Claude Desktop).
+pub fn claude_desktop_config_path() -> Option<PathBuf> {
+    let home = home_dir();
+    #[cfg(target_os = "macos")]
+    return Some(home.join("Library/Application Support/Claude/claude_desktop_config.json"));
+    #[cfg(target_os = "windows")]
+    return Some(home.join("AppData/Roaming/Claude/claude_desktop_config.json"));
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    {
+        let _ = home;
+        None
+    }
+}

@@ -397,6 +397,52 @@ impl DatabaseManager {
         ).map_err(|e| format!("Query failed: {}", e))
     }
 
+    /// All memories in the same thread as `uuid`, ordered oldest-first.
+    /// A thread is the recursive ancestor chain plus all descendants —
+    /// every memory sharing the same root via parent_uuid.
+    pub fn thread_for(&self, uuid: &str, limit: usize) -> Result<Vec<SignalEntry>, String> {
+        let resolved = self.resolve_uuid(uuid)?
+            .ok_or_else(|| format!("Memory not found: {}", uuid))?;
+        let conn = self.conn()?;
+        let mut stmt = conn.prepare(
+            "WITH target AS (
+                SELECT root_uuid FROM memory_chains WHERE memory_uuid = ?1 LIMIT 1
+             )
+             SELECT m.memory_uuid,
+                    COALESCE(json_extract(m.payload, '$.gist'), substr(json_extract(m.payload, '$.content'), 1, 200)) as gist,
+                    m.created_at,
+                    m.parent_uuid,
+                    json_extract(m.payload, '$.content') as content
+             FROM memories m
+             JOIN memory_chains c ON c.memory_uuid = m.memory_uuid
+             WHERE c.root_uuid = (SELECT root_uuid FROM target)
+             ORDER BY m.created_at ASC
+             LIMIT ?2",
+        ).map_err(|e| format!("Query failed: {}", e))?;
+        let rows = stmt.query_map(rusqlite::params![resolved, limit], |row| {
+            Ok(SignalEntry {
+                memory_uuid: row.get(0)?,
+                gist: row.get(1)?,
+                created_at: row.get(2)?,
+                parent_uuid: row.get(3)?,
+                content: row.get(4)?,
+                score: None,
+            })
+        }).map_err(|e| format!("Query failed: {}", e))?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+    }
+
+    /// Currently-configured embedding model name, or None if not set.
+    pub fn get_embedding_model(&self) -> Result<Option<String>, String> {
+        let conn = self.conn()?;
+        let opt: Option<String> = conn.query_row(
+            "SELECT value FROM embedding_meta WHERE key = 'model'",
+            [],
+            |row| row.get(0),
+        ).optional().map_err(|e| format!("Query failed: {}", e))?;
+        Ok(opt)
+    }
+
     fn resolve_uuid(&self, partial: &str) -> Result<Option<String>, String> {
         if partial.len() == 36 { return Ok(Some(partial.to_uppercase())); }
         let conn = self.conn()?;

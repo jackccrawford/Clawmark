@@ -43,3 +43,61 @@ export function getDataDir() {
 export function openPath(path) {
   return invoke('plugin:opener|open_path', { path });
 }
+
+// -------------------------------------------------------------------------
+// Phase 1 (Detail, Find, Status, Settings, Data&export support)
+// -------------------------------------------------------------------------
+
+/**
+ * Fetch full details for a single memory by UUID.
+ * Returns: { uuid, gist, content, created_at, parent_uuid, category } | null
+ */
+export function getMemoryDetail(uuid) {
+  return invoke('get_memory_detail', { uuid });
+}
+
+/**
+ * Fetch all memories in the same thread as `uuid`, ordered oldest-first.
+ * Returns: Array<{ uuid, gist, content, created_at, category, parent_uuid }>
+ */
+export function getThreadChain(uuid, limit = 100) {
+  return invoke('get_thread_chain', { uuid, limit });
+}
+
+/**
+ * Bundled health report for the Status surface.
+ * Returns: {
+ *   memory_count, embedding_count, indexed_pct, embedding_model,
+ *   data_dir, data_dir_bytes,
+ *   claude_desktop_configured, claude_desktop_has_geniuz, claude_desktop_config_path
+ * }
+ */
+export function getStatus() {
+  return invoke('get_status');
+}
+
+/**
+ * Current persisted settings. Returns the full Settings struct:
+ * { version, launch_at_login, autoupdate_enabled,
+ *   update_check_frequency (daily/weekly/manual),
+ *   recent_memories_count }
+ */
+export function getSettings() {
+  return invoke('get_settings');
+}
+
+/**
+ * Persist a new Settings struct (full replace). Returns the loaded value
+ * after save (which may differ from the patch if the file rejected a field).
+ */
+export function updateSettings(settings) {
+  return invoke('update_settings', { patch: { settings } });
+}
+
+/**
+ * Copy memory.db to `target_path` (full path including filename).
+ * Returns the number of bytes copied.
+ */
+export function exportMemoryDbTo(targetPath) {
+  return invoke('export_memory_db_to', { targetPath });
+}

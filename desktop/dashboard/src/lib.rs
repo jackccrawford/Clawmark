@@ -6,7 +6,8 @@
 // and query logic, used by the CLI, the MCP server, and this dashboard alike.
 
 use geniuz::db::{DatabaseManager, SignalEntry};
-use serde::Serialize;
+use geniuz::settings::Settings;
+use serde::{Deserialize, Serialize};
 
 fn db_path() -> String {
     geniuz::data_dir()
@@ -18,6 +19,10 @@ fn db_path() -> String {
 fn open_db() -> Result<DatabaseManager, String> {
     DatabaseManager::new(&db_path())
 }
+
+// -------------------------------------------------------------------------
+// Data shapes returned to the frontend
+// -------------------------------------------------------------------------
 
 #[derive(Serialize, Default)]
 struct StationStats {
@@ -44,6 +49,38 @@ struct DailyCount {
     date: String,
     count: usize,
 }
+
+#[derive(Serialize)]
+struct MemoryDetail {
+    uuid: String,
+    gist: String,
+    content: Option<String>,
+    created_at: String,
+    parent_uuid: Option<String>,
+    category: Option<String>,
+}
+
+#[derive(Serialize)]
+struct StatusReport {
+    memory_count: usize,
+    embedding_count: usize,
+    indexed_pct: f64,
+    embedding_model: Option<String>,
+    data_dir: String,
+    data_dir_bytes: u64,
+    claude_desktop_configured: bool,
+    claude_desktop_has_geniuz: bool,
+    claude_desktop_config_path: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct SettingsPatch {
+    settings: Settings,
+}
+
+// -------------------------------------------------------------------------
+// Commands
+// -------------------------------------------------------------------------
 
 #[tauri::command]
 fn get_app_version() -> &'static str {
@@ -103,9 +140,96 @@ fn keyword_search(query: String, limit: Option<u32>) -> Result<Vec<RecentMemory>
 }
 
 #[tauri::command]
+fn get_memory_detail(uuid: String) -> Result<Option<MemoryDetail>, String> {
+    let db = open_db()?;
+    let entry = db.get_by_uuid_prefix(&uuid)?;
+    Ok(entry.map(map_detail))
+}
+
+#[tauri::command]
+fn get_thread_chain(uuid: String, limit: Option<u32>) -> Result<Vec<RecentMemory>, String> {
+    let db = open_db()?;
+    let entries = db.thread_for(&uuid, limit.unwrap_or(100) as usize)?;
+    Ok(entries.into_iter().map(map_recent).collect())
+}
+
+#[tauri::command]
+fn get_status() -> Result<StatusReport, String> {
+    let db = open_db()?;
+    let memory_count = db.count()?;
+    let embedding_count = db.embedding_count()?;
+    let indexed_pct = if memory_count == 0 {
+        0.0
+    } else {
+        (embedding_count as f64 / memory_count as f64) * 100.0
+    };
+    let embedding_model = db.get_embedding_model().ok().flatten();
+    let data_dir = geniuz::data_dir().to_string_lossy().into_owned();
+    let data_dir_bytes = dir_size(&geniuz::data_dir()).unwrap_or(0);
+
+    // Claude Desktop check
+    let config_path = geniuz::claude_desktop_config_path();
+    let (claude_desktop_configured, claude_desktop_has_geniuz, claude_desktop_config_path) =
+        match &config_path {
+            Some(p) => {
+                let exists = p.exists();
+                let has_geniuz = if exists {
+                    std::fs::read_to_string(p)
+                        .ok()
+                        .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok())
+                        .and_then(|v| {
+                            v.get("mcpServers")
+                                .and_then(|m| m.as_object())
+                                .map(|obj| obj.keys().any(|k| k.to_lowercase().contains("geniuz")))
+                        })
+                        .unwrap_or(false)
+                } else {
+                    false
+                };
+                (exists, has_geniuz, Some(p.to_string_lossy().into_owned()))
+            }
+            None => (false, false, None),
+        };
+
+    Ok(StatusReport {
+        memory_count,
+        embedding_count,
+        indexed_pct,
+        embedding_model,
+        data_dir,
+        data_dir_bytes,
+        claude_desktop_configured,
+        claude_desktop_has_geniuz,
+        claude_desktop_config_path,
+    })
+}
+
+#[tauri::command]
+fn get_settings() -> Settings {
+    Settings::load()
+}
+
+#[tauri::command]
+fn update_settings(patch: SettingsPatch) -> Result<Settings, String> {
+    patch.settings.save()?;
+    Ok(Settings::load())
+}
+
+#[tauri::command]
+fn export_memory_db_to(target_path: String) -> Result<u64, String> {
+    let source = db_path();
+    std::fs::copy(&source, &target_path)
+        .map_err(|e| format!("Copy failed: {}", e))
+}
+
+#[tauri::command]
 fn get_data_dir() -> String {
     geniuz::data_dir().to_string_lossy().into_owned()
 }
+
+// -------------------------------------------------------------------------
+// Helpers
+// -------------------------------------------------------------------------
 
 fn map_recent(e: SignalEntry) -> RecentMemory {
     // First field of pipe-thoughtform gist is conventionally the category.
@@ -125,6 +249,37 @@ fn map_recent(e: SignalEntry) -> RecentMemory {
     }
 }
 
+fn map_detail(e: SignalEntry) -> MemoryDetail {
+    let category = e
+        .gist
+        .split('|')
+        .next()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty() && s.len() < 40);
+    MemoryDetail {
+        uuid: e.memory_uuid,
+        gist: e.gist,
+        content: e.content,
+        created_at: e.created_at,
+        parent_uuid: e.parent_uuid,
+        category,
+    }
+}
+
+fn dir_size(path: &std::path::Path) -> std::io::Result<u64> {
+    let mut total = 0;
+    for entry in std::fs::read_dir(path)? {
+        let entry = entry?;
+        let meta = entry.metadata()?;
+        if meta.is_file() {
+            total += meta.len();
+        } else if meta.is_dir() {
+            total += dir_size(&entry.path()).unwrap_or(0);
+        }
+    }
+    Ok(total)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -136,6 +291,12 @@ pub fn run() {
             get_activity,
             semantic_search,
             keyword_search,
+            get_memory_detail,
+            get_thread_chain,
+            get_status,
+            get_settings,
+            update_settings,
+            export_memory_db_to,
             get_data_dir,
         ])
         .run(tauri::generate_context!())
