@@ -6,6 +6,8 @@ import * as recent from './surfaces/recent.js';
 import * as detail from './surfaces/detail.js';
 import * as find from './surfaces/find.js';
 import * as status from './surfaces/status.js';
+import * as settings from './surfaces/settings.js';
+import * as dataSurface from './surfaces/data.js';
 import * as placeholder from './surfaces/placeholder.js';
 import { subscribe, getState, setState } from './store.js';
 
@@ -19,6 +21,8 @@ const SURFACE_MOUNTS = {
   detail: detail.mount,
   find: find.mount,
   status: status.mount,
+  settings: settings.mount,
+  data: dataSurface.mount,
 };
 
 async function bootstrap() {
