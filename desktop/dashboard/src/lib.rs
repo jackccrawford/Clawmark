@@ -8,6 +8,8 @@
 use geniuz::db::{DatabaseManager, SignalEntry};
 use geniuz::settings::Settings;
 use serde::{Deserialize, Serialize};
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
+use tauri::{Emitter, Manager};
 
 fn db_path() -> String {
     geniuz::data_dir()
@@ -280,6 +282,88 @@ fn dir_size(path: &std::path::Path) -> std::io::Result<u64> {
     Ok(total)
 }
 
+// Build the native macOS / Windows / Linux menu bar.
+// Menu items with `id` emit menu events that the frontend listens for via
+// `tauri::Emitter`-relayed window events ("menu:<id>"). Predefined items
+// (undo/redo/cut/copy/paste/etc.) work without any wiring.
+fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
+    // File menu — surface-level navigation accelerators
+    let mi_find = MenuItem::with_id(app, "menu_find", "Find…", true, Some("CmdOrCtrl+K"))?;
+    let mi_recent = MenuItem::with_id(app, "menu_recent", "Show Recent", true, Some("CmdOrCtrl+1"))?;
+    let mi_status = MenuItem::with_id(app, "menu_status", "Show Status", true, Some("CmdOrCtrl+2"))?;
+    let mi_settings = MenuItem::with_id(app, "menu_settings", "Settings…", true, Some("CmdOrCtrl+,"))?;
+    let mi_export = MenuItem::with_id(app, "menu_export", "Export memory.db…", true, Some("CmdOrCtrl+Shift+E"))?;
+
+    let file_menu = Submenu::with_items(
+        app,
+        "File",
+        true,
+        &[
+            &mi_find,
+            &mi_recent,
+            &mi_status,
+            &PredefinedMenuItem::separator(app)?,
+            &mi_settings,
+            &mi_export,
+            &PredefinedMenuItem::separator(app)?,
+            &PredefinedMenuItem::close_window(app, Some("Close"))?,
+        ],
+    )?;
+
+    let edit_menu = Submenu::with_items(
+        app,
+        "Edit",
+        true,
+        &[
+            &PredefinedMenuItem::undo(app, None)?,
+            &PredefinedMenuItem::redo(app, None)?,
+            &PredefinedMenuItem::separator(app)?,
+            &PredefinedMenuItem::cut(app, None)?,
+            &PredefinedMenuItem::copy(app, None)?,
+            &PredefinedMenuItem::paste(app, None)?,
+            &PredefinedMenuItem::select_all(app, None)?,
+        ],
+    )?;
+
+    let view_menu = Submenu::with_items(
+        app,
+        "View",
+        true,
+        &[
+            &MenuItem::with_id(app, "menu_refresh", "Refresh", true, Some("CmdOrCtrl+R"))?,
+            &PredefinedMenuItem::separator(app)?,
+            &PredefinedMenuItem::fullscreen(app, None)?,
+        ],
+    )?;
+
+    let window_menu = Submenu::with_items(
+        app,
+        "Window",
+        true,
+        &[
+            &PredefinedMenuItem::minimize(app, None)?,
+            &PredefinedMenuItem::maximize(app, None)?,
+            &PredefinedMenuItem::separator(app)?,
+            &PredefinedMenuItem::close_window(app, Some("Close Window"))?,
+        ],
+    )?;
+
+    let help_menu = Submenu::with_items(
+        app,
+        "Help",
+        true,
+        &[
+            &MenuItem::with_id(app, "menu_about", "About Geniuz", true, None::<&str>)?,
+            &MenuItem::with_id(app, "menu_website", "Visit geniuz.life", true, None::<&str>)?,
+        ],
+    )?;
+
+    Menu::with_items(
+        app,
+        &[&file_menu, &edit_menu, &view_menu, &window_menu, &help_menu],
+    )
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -299,6 +383,20 @@ pub fn run() {
             export_memory_db_to,
             get_data_dir,
         ])
+        .setup(|app| {
+            let menu = build_menu(app.handle())?;
+            app.set_menu(menu)?;
+            Ok(())
+        })
+        .on_menu_event(|app, event| {
+            // Relay menu events to the frontend so JS can switch surfaces.
+            // Predefined items (undo/redo/cut/copy/paste) are handled by the
+            // webview natively and never reach this handler.
+            let id = event.id().0.as_str();
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.emit("menu", id);
+            }
+        })
         .run(tauri::generate_context!())
         .expect("error while running geniuz-dashboard");
 }
