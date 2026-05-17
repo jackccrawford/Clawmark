@@ -9,7 +9,7 @@ import * as status from './surfaces/status.js';
 import * as settings from './surfaces/settings.js';
 import * as dataSurface from './surfaces/data.js';
 import * as placeholder from './surfaces/placeholder.js';
-import { subscribe, getState, setState } from './store.js';
+import { subscribe, getState, setState, navigate } from './store.js';
 
 // Tag the document so CSS can target Tauri-specific rules.
 if (window.__TAURI__) {
@@ -86,4 +86,51 @@ async function renderSurface(mainHost) {
   if (myToken !== renderToken) return;
 }
 
+// Wire native menu events from Rust → surface navigation / actions.
+// IDs match those declared in build_menu() in src/lib.rs.
+async function wireMenuEvents() {
+  if (!window.__TAURI__) return;
+  const { listen } = window.__TAURI__.event;
+  await listen('menu', async (event) => {
+    const id = event.payload;
+    switch (id) {
+      case 'menu_recent':
+        navigate('recent');
+        break;
+      case 'menu_find':
+        navigate('find');
+        break;
+      case 'menu_status':
+        navigate('status');
+        break;
+      case 'menu_settings':
+        navigate('settings');
+        break;
+      case 'menu_export':
+        navigate('data');
+        break;
+      case 'menu_refresh':
+        // Force a re-render of the current surface by toggling the key.
+        // Setting state with an unchanged value still notifies subscribers.
+        setState({ _refresh: Date.now() });
+        break;
+      case 'menu_website':
+        try {
+          await api.openPath('https://geniuz.life');
+        } catch (e) {
+          console.error('[geniuz] open website failed:', e);
+        }
+        break;
+      case 'menu_about':
+        // Lightweight About — no modal yet; surface a console log + alert.
+        // Eventually this becomes a real About panel.
+        alert(`Geniuz ${getState().appVersion || ''}\nManaged Ventures LLC\nhttps://geniuz.life`);
+        break;
+      default:
+        console.warn('[geniuz] unhandled menu event:', id);
+    }
+  });
+}
+
 bootstrap();
+wireMenuEvents();
