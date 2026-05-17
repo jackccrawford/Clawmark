@@ -1,0 +1,47 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Geniuz",
+  "version": "2.0.0",
+  "identifier": "com.managedventures.geniuz",
+  "build": {
+    "frontendDist": "frontend"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Geniuz — Station Dashboard",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 900,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "Managed Ventures LLC",
+    "copyright": "Copyright © 2026 Managed Ventures LLC",
+    "category": "Productivity",
+    "shortDescription": "Persistent memory for your AI agents",
+    "longDescription": "Geniuz is local-first AI memory. Your AI agents — Claude, Cursor, anything that speaks MCP — get a persistent memory that survives every session. It runs on your Mac or PC. No cloud. No account. No telemetry. The dashboard shows what your agents are learning.",
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      }
+    }
+  }
+}

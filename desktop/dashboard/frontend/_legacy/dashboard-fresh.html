@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Geniuz — Fresh install</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body class="dashboard-page">
+
+<div class="window-frame">
+
+  <div class="title-bar">
+    <div class="tb-traffic">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="tb-title">Geniuz</div>
+    <div class="tb-spacer"></div>
+  </div>
+
+  <div class="app-shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="assets/geniuz-mark.svg" alt="" class="sb-logo" />
+        <div>
+          <div class="sb-name">Geniuz</div>
+          <div class="sb-version" data-version-display>v2.0.0</div>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Memory</div>
+        <a class="nav-item active" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          Recent
+          <span class="ni-count">1</span>
+        </a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+          Find
+        </a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h6M3 12h12M3 17h18"/></svg>
+          Conversations
+        </a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Add files
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Workspace</div>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Status
+        </a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6m0 8v6M4.93 4.93l4.24 4.24m5.66 5.66 4.24 4.24M2 12h6m8 0h6M4.93 19.07l4.24-4.24m5.66-5.66 4.24-4.24"/></svg>
+          Data &amp; export
+        </a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </a>
+      </div>
+
+      <div class="sidebar-footer">
+        <a class="nav-item" href="#" id="sbReplay" style="font-size: var(--fs-12); color: var(--color-ink-quaternary); padding: 5px 10px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.4-1 2-1.5 2.5-.5.5-1 1-1 2"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg>
+          Show walkthrough
+        </a>
+        <span class="local-signature" style="margin-top: 8px;">
+          <span class="dot"></span>
+          local <span class="sep">·</span> private <span class="sep">·</span> yours
+        </span>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+
+      <header class="main-header">
+        <div>
+          <h1>Your memory</h1>
+          <p class="mh-sub">Saved by your AI agents <span style="color:var(--color-ink-senary)">·</span> stored on this Mac <span style="color:var(--color-ink-senary)">·</span> searchable by meaning</p>
+        </div>
+        <div class="mh-actions">
+          <div class="search-field" style="min-width:280px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" placeholder="Search your memories…" />
+            <kbd>⌘K</kbd>
+          </div>
+          <button class="btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Add files
+          </button>
+        </div>
+      </header>
+
+      <div class="main-body">
+
+        <!-- Carousel -->
+        <div class="welcome-carousel" id="carousel">
+          <button class="wc-skip" id="wcSkip">Skip walkthrough</button>
+
+          <div class="wc-track" id="wcTrack" style="transform:translateX(0%)">
+
+            <!-- Slide 1: Welcome -->
+            <div class="wc-slide">
+              <div class="wc-text">
+                <div class="wc-eyebrow">Welcome</div>
+                <h2 class="wc-title">Your AI remembers now.</h2>
+                <p class="wc-body">Geniuz is a small, fast memory that lives on your Mac. When you tell Claude or another AI assistant to remember something, it lands here. Search later by meaning, not just keywords. Your data never leaves your machine.</p>
+                <div class="wc-cta">
+                  <button class="btn btn-primary" onclick="goto(1)">Get started</button>
+                </div>
+              </div>
+              <div class="wc-visual">
+                <div class="wv-mark">
+                  <img src="assets/geniuz-mark.svg" alt="" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 2: Your first memory -->
+            <div class="wc-slide">
+              <div class="wc-text">
+                <div class="wc-eyebrow">Your first memory</div>
+                <h2 class="wc-title">It's already saved.</h2>
+                <p class="wc-body">Geniuz just saved its first memory: <em>"first memory: geniuz is installed and working."</em> Try recalling it. Press <kbd>⌘K</kbd> and type <code>first memory</code>. If your memory comes back, everything is wired up.</p>
+                <div class="wc-cta">
+                  <button class="btn btn-primary" onclick="goto(2)">Got it, what's next</button>
+                </div>
+              </div>
+              <div class="wc-visual">
+                <div class="wv-memory-card">
+                  <div class="marker"></div>
+                  <div>
+                    <div class="gist">first memory · geniuz is installed and working</div>
+                    <div class="meta">just now</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 3: Connect your AI -->
+            <div class="wc-slide">
+              <div class="wc-text">
+                <div class="wc-eyebrow">Connect</div>
+                <h2 class="wc-title">Claude Desktop is wired up.</h2>
+                <p class="wc-body">Next time you're in a conversation with Claude, just say <em>"remember David's birthday is May 12"</em> or <em>"recall what we decided about the prototype."</em> Claude will use Geniuz automatically. Watch this dashboard fill up as you go.</p>
+                <div class="wc-cta">
+                  <button class="btn btn-primary" onclick="goto(3)">Last step</button>
+                </div>
+              </div>
+              <div class="wc-visual">
+                <div class="wv-flow">
+                  <div class="node">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  </div>
+                  <svg class="arrow" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                  <div class="node accent">
+                    <img src="assets/geniuz-mark.svg" alt="" style="width:30px;height:30px;filter:brightness(0) invert(1);" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 4: Add what you have -->
+            <div class="wc-slide">
+              <div class="wc-text">
+                <div class="wc-eyebrow">Bring your notes</div>
+                <h2 class="wc-title">Have notes already? Drop them in.</h2>
+                <p class="wc-body">Drop a folder of notes, ideas, or markdown files. Geniuz reads each one, saves them as memories, and groups by topic automatically. Great for migrating from Obsidian, Apple Notes exports, or any folder you've been collecting.</p>
+                <div class="wc-cta">
+                  <button class="btn btn-accent">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Add files now
+                  </button>
+                  <button class="btn" id="wcFinish">Maybe later</button>
+                </div>
+              </div>
+              <div class="wc-visual">
+                <div class="wv-folder">
+                  <div class="folder-head">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    Documents/notes
+                  </div>
+                  <div class="file-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    project-ideas.md
+                  </div>
+                  <div class="file-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    customer-calls.md
+                  </div>
+                  <div class="file-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    pricing-decisions.md
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Controls -->
+          <div class="wc-controls">
+            <button class="wc-arrow" id="wcPrev" aria-label="Previous">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div class="wc-dots" id="wcDots">
+              <button class="wc-dot active" data-idx="0" aria-label="Slide 1"></button>
+              <button class="wc-dot" data-idx="1" aria-label="Slide 2"></button>
+              <button class="wc-dot" data-idx="2" aria-label="Slide 3"></button>
+              <button class="wc-dot" data-idx="3" aria-label="Slide 4"></button>
+            </div>
+            <button class="wc-arrow" id="wcNext" aria-label="Next">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Three-up small stats -->
+        <div class="stat-row fresh">
+          <div class="stat-card fresh">
+            <div class="sc-label">Total memories</div>
+            <div class="sc-num">1</div>
+            <div class="sc-meta">added a moment ago</div>
+          </div>
+          <div class="stat-card fresh">
+            <div class="sc-label">Storage used</div>
+            <div class="sc-num">28<span style="font-size:0.55em;color:var(--color-ink-tertiary);font-weight:500;margin-left:3px;">KB</span></div>
+            <div class="sc-meta">on this Mac</div>
+          </div>
+          <div class="stat-card fresh">
+            <div class="sc-label">Connected to</div>
+            <div class="sc-num" style="font-size:1.25rem; padding-top:4px;">Claude Desktop</div>
+            <div class="sc-meta"><span style="color:var(--color-good); font-weight:500;">●</span> ready</div>
+          </div>
+        </div>
+
+        <!-- Single memory + side panel -->
+        <div class="split-panes">
+
+          <div>
+            <div class="section-header">
+              <h2>Your memories</h2>
+              <span class="sh-meta">1 memory so far</span>
+            </div>
+
+            <div class="memory-list">
+              <div class="memory-item">
+                <span class="m-marker" aria-hidden="true"></span>
+                <div class="m-body">
+                  <div class="m-gist">first memory · geniuz is installed and working</div>
+                  <div class="m-meta">welcome</div>
+                </div>
+                <div class="m-time">just now</div>
+              </div>
+            </div>
+
+            <div style="margin-top:14px; padding:14px 18px; border:1px dashed var(--color-border-strong); border-radius:var(--r-lg); background:var(--color-surface-subtle); display:flex; align-items:center; gap:12px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;color:var(--color-ink-quinary);flex-shrink:0;"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              <div style="font-size:13px; color:var(--color-ink-tertiary); line-height:1.45;">
+                More memories will appear here as your AI assistant saves them. Or
+                <a href="#" style="color:var(--color-accent); font-weight:500;">add files</a>
+                to start with what you already have.
+              </div>
+            </div>
+          </div>
+
+          <aside class="side-panel">
+            <div>
+              <div class="sp-title">Activity</div>
+              <div class="empty-side" style="margin-top:8px;">
+                <svg class="es-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-6"/></svg>
+                <div class="es-text">Your activity will appear here as you use Geniuz.</div>
+              </div>
+            </div>
+
+            <hr class="divider" />
+
+            <div>
+              <div class="sp-title">Folder</div>
+              <div style="margin-top:8px;">
+                <div class="kv-row"><span class="kv-key">Total</span><span class="kv-val">1 memory</span></div>
+                <div class="kv-row"><span class="kv-key">Conversations</span><span class="kv-val">0</span></div>
+                <div class="kv-row"><span class="kv-key">All searchable</span><span class="kv-val" style="color:var(--color-good);">yes</span></div>
+                <div class="kv-row"><span class="kv-key">Last updated</span><span class="kv-val" style="font-weight:500;">just now</span></div>
+              </div>
+              <button class="btn" style="width:100%; justify-content:center; margin-top:10px; font-size:12px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                Show in Finder
+              </button>
+            </div>
+
+            <hr class="divider" />
+
+            <div>
+              <div class="sp-title">Status</div>
+              <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                  <span class="dot dot-good"></span>
+                  <span>Claude Desktop</span>
+                  <span style="margin-left:auto; font-size:12px; color:var(--color-ink-quaternary);">connected</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                  <span class="dot dot-good"></span>
+                  <span>Memory search</span>
+                  <span style="margin-left:auto; font-size:12px; color:var(--color-ink-quaternary);">ready</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                  <span class="dot dot-good"></span>
+                  <span>Background service</span>
+                  <span style="margin-left:auto; font-size:12px; color:var(--color-ink-quaternary);">running</span>
+                </div>
+              </div>
+              <div style="margin-top:12px; font-size:11px; color:var(--color-ink-quaternary); line-height:1.45; padding:8px 0; border-top:1px solid var(--color-border-subtle);">
+                Your memories are stored locally and remain yours whether or not your AI is running.
+              </div>
+            </div>
+          </aside>
+
+        </div>
+
+      </div>
+
+      <footer class="main-footer">
+        <span class="local-signature">
+          <span class="dot"></span>
+          local <span class="sep">·</span> private <span class="sep">·</span> yours
+        </span>
+        <span style="margin-left:auto;">Geniuz <span style="color:var(--color-ink-senary)">·</span> open source <span style="color:var(--color-ink-senary)">·</span> free forever</span>
+      </footer>
+
+    </main>
+  </div>
+</div>
+
+<script src="tauri-bridge.js"></script>
+<script>
+window.GENIUZ_READY.then(() => {
+let idx = 0;
+const max = 4;
+const track = document.getElementById('wcTrack');
+const dots = document.querySelectorAll('.wc-dot');
+const carousel = document.getElementById('carousel');
+
+function render() {
+  track.style.transform = `translateX(-${idx * 25}%)`;
+  dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+}
+function goto(n) {
+  if (n < 0 || n >= max) return;
+  idx = n;
+  render();
+}
+window.goto = goto;
+
+document.getElementById('wcPrev').addEventListener('click', () => goto((idx - 1 + max) % max));
+document.getElementById('wcNext').addEventListener('click', () => goto((idx + 1) % max));
+dots.forEach((d, i) => d.addEventListener('click', () => goto(i)));
+document.getElementById('wcSkip').addEventListener('click', () => carousel.style.display = 'none');
+document.getElementById('wcFinish').addEventListener('click', () => carousel.style.display = 'none');
+
+// Replay walkthrough from sidebar — restart at slide 1
+document.getElementById('sbReplay').addEventListener('click', e => {
+  e.preventDefault();
+  carousel.style.display = '';
+  goto(0);
+  carousel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+// Keyboard nav
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') goto((idx - 1 + max) % max);
+  if (e.key === 'ArrowRight') goto((idx + 1) % max);
+});
+}); // end window.GENIUZ_READY.then
+</script>
+
+</body>
+</html>
