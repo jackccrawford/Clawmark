@@ -3,6 +3,9 @@
 import * as api from './api.js';
 import { sidebar } from './components/sidebar.js';
 import * as recent from './surfaces/recent.js';
+import * as detail from './surfaces/detail.js';
+import * as find from './surfaces/find.js';
+import * as status from './surfaces/status.js';
 import * as placeholder from './surfaces/placeholder.js';
 import { subscribe, getState, setState } from './store.js';
 
@@ -13,6 +16,9 @@ if (window.__TAURI__) {
 
 const SURFACE_MOUNTS = {
   recent: recent.mount,
+  detail: detail.mount,
+  find: find.mount,
+  status: status.mount,
 };
 
 async function bootstrap() {
@@ -56,17 +62,24 @@ async function bootstrap() {
   subscribe((s) => renderSurface(mainHost));
 }
 
-let lastSurface = null;
+let renderToken = 0;
+let lastRenderKey = null;
 async function renderSurface(mainHost) {
   const s = getState();
-  if (s.currentSurface === lastSurface) return; // avoid spurious re-renders
-  lastSurface = s.currentSurface;
+  // Re-render when surface OR the surface-specific input changes
+  // (selectedMemoryUuid for detail, searchQuery for find).
+  const key = `${s.currentSurface}|${s.selectedMemoryUuid || ''}|${s.searchQuery || ''}`;
+  if (key === lastRenderKey) return;
+  lastRenderKey = key;
+  const myToken = ++renderToken;
   const mounter = SURFACE_MOUNTS[s.currentSurface];
   if (mounter) {
     await mounter(mainHost);
   } else {
     await placeholder.mount(mainHost, s.currentSurface);
   }
+  // If another render started while we were mounting, defer to it.
+  if (myToken !== renderToken) return;
 }
 
 bootstrap();
