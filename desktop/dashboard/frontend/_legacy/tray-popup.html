@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Geniuz — Tray click popup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body class="popup-page">
+
+<div class="popup-shell" role="dialog" aria-label="Geniuz status panel">
+
+  <!-- Header -->
+  <div class="popup-header">
+    <img src="assets/geniuz-mark.svg" alt="" class="ph-logo" />
+    <div>
+      <div class="ph-title">Geniuz</div>
+      <div class="ph-meta" data-version-display>v2.0.0</div>
+    </div>
+    <div class="ph-spacer"></div>
+    <button class="ph-iconbtn" aria-label="Settings" title="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+
+  <!-- Stats hero -->
+  <div class="popup-stats">
+    <div class="ps-item">
+      <div class="ps-num">1,247</div>
+      <div class="ps-lbl">memories</div>
+    </div>
+    <div class="ps-divider"></div>
+    <div class="ps-item">
+      <div class="ps-num">+5</div>
+      <div class="ps-lbl">today</div>
+    </div>
+    <div class="ps-divider"></div>
+    <div class="ps-item">
+      <div class="ps-num">89</div>
+      <div class="ps-lbl">threads</div>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="popup-search">
+    <div class="search-field">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" placeholder="Search your memories…" />
+      <kbd>⌘K</kbd>
+    </div>
+  </div>
+
+  <!-- Memory list (recent) -->
+  <div class="popup-list" id="popupList"></div>
+
+  <!-- Footer -->
+  <div class="popup-footer">
+    <span class="local-signature">
+      <span class="dot dot-good"></span>
+      Claude Desktop connected
+    </span>
+    <button class="btn btn-primary" style="font-size:12px;padding:5px 10px;">Dashboard</button>
+  </div>
+
+  <!-- Quit row — Mac convention, last item in menu-bar popup -->
+  <button class="popup-quit-row" aria-label="Quit Geniuz">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+    Quit Geniuz
+  </button>
+
+</div>
+
+<script src="data.js"></script>
+<script src="tauri-bridge.js"></script>
+<script>
+window.GENIUZ_READY.then(() => {
+const list = document.getElementById('popupList');
+
+// Sort by date desc, but group threads: each root is followed by its descendants
+// (also date-desc within the thread).
+const all = window.GENIUZ_MEMORIES;
+const childrenByParent = {};
+all.forEach(m => {
+  if (m.parent_id) {
+    (childrenByParent[m.parent_id] ||= []).push(m);
+  }
+});
+const roots = all.filter(m => !m.parent_id).sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+const ordered = [];
+for (const root of roots) {
+  ordered.push({ m: root, threaded: false, hasThread: !!childrenByParent[root.id] });
+  const kids = (childrenByParent[root.id] || []).sort((a, b) => b.created_at.localeCompare(a.created_at));
+  for (const kid of kids) {
+    ordered.push({ m: kid, threaded: true, hasThread: false });
+  }
+  if (ordered.length >= 7) break;
+}
+const slice = ordered.slice(0, 7);
+
+list.insertAdjacentHTML('beforeend', '<div class="section-label">Recent</div>');
+
+slice.forEach(({ m, threaded, hasThread }) => {
+  const el = document.createElement('div');
+  el.className = 'memory-item compact' + (threaded ? ' is-threaded' : '') + (hasThread ? ' has-thread' : '');
+  el.innerHTML = `
+    <span class="m-marker" aria-hidden="true"></span>
+    <div class="m-body">
+      <div class="m-gist">${window.renderMd(m.gist)}</div>
+      ${hasThread ? '<div class="m-meta"></div>' : ''}
+    </div>
+    <div class="m-time">${window.fmtTime(m.created_at)}</div>
+  `;
+  list.appendChild(el);
+});
+}); // end window.GENIUZ_READY.then
+</script>
+
+</body>
+</html>

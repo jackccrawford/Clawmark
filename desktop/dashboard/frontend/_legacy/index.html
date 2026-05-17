@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Geniuz — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body class="dashboard-page">
+
+<div class="window-frame">
+
+  <!-- Title bar with macOS traffic lights -->
+  <div class="title-bar">
+    <div class="tb-traffic">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="tb-title">Geniuz</div>
+    <div class="tb-spacer"></div>
+  </div>
+
+  <!-- App shell: sidebar + main -->
+  <div class="app-shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="assets/geniuz-mark.svg" alt="" class="sb-logo" />
+        <div>
+          <div class="sb-name">Geniuz</div>
+          <div class="sb-version" data-version-display>v2.0.0</div>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Memory</div>
+        <a class="nav-item active" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          Recent
+          <span class="ni-count" data-stat="total_memories">—</span>
+        </a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+          Find
+        </a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h6M3 12h12M3 17h18"/></svg>
+          Conversations
+          <span class="ni-count" data-stat="threads">—</span>
+        </a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Add files
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Workspace</div>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Status
+        </a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6m0 8v6M4.93 4.93l4.24 4.24m5.66 5.66 4.24 4.24M2 12h6m8 0h6M4.93 19.07l4.24-4.24m5.66-5.66 4.24-4.24"/></svg>
+          Data &amp; export
+        </a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </a>
+      </div>
+
+      <div class="sidebar-footer">
+        <a class="nav-item" href="dashboard-fresh.html" style="font-size: var(--fs-12); color: var(--color-ink-quaternary); padding: 5px 10px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.4-1 2-1.5 2.5-.5.5-1 1-1 2"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg>
+          Show walkthrough
+        </a>
+        <span class="local-signature" style="margin-top: 8px;">
+          <span class="dot"></span>
+          local <span class="sep">·</span> private <span class="sep">·</span> yours
+        </span>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+
+      <header class="main-header">
+        <div>
+          <h1>Your memory</h1>
+          <p class="mh-sub">Saved by your AI agents <span style="color:var(--color-ink-senary)">·</span> stored on this Mac <span style="color:var(--color-ink-senary)">·</span> searchable by meaning</p>
+        </div>
+        <div class="mh-actions">
+          <div class="search-field" style="min-width:280px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" placeholder="Search your memories…" />
+            <kbd>⌘K</kbd>
+          </div>
+          <button class="btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Add files
+          </button>
+        </div>
+      </header>
+
+      <div class="main-body">
+
+        <!-- Stat hero row -->
+        <div class="stat-row">
+
+          <div class="stat-card featured">
+            <div class="sc-label">Total memories</div>
+            <div class="sc-num" data-stat="total_memories">—</div>
+            <div class="sc-meta">
+              <span data-stat="this_week_summary">—</span>
+            </div>
+            <svg class="sc-spark" viewBox="0 0 88 28" fill="none">
+              <path d="M2 22 L8 20 L14 17 L20 19 L26 14 L32 16 L38 11 L44 13 L50 9 L56 10 L62 6 L68 7 L74 4 L80 5 L86 2"
+                    stroke="#0d9488" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M2 22 L8 20 L14 17 L20 19 L26 14 L32 16 L38 11 L44 13 L50 9 L56 10 L62 6 L68 7 L74 4 L80 5 L86 2 L86 28 L2 28 Z"
+                    fill="url(#sparkfill)" opacity="0.35" />
+              <defs>
+                <linearGradient id="sparkfill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#2dd4bf" />
+                  <stop offset="100%" stop-color="#2dd4bf" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+
+          <div class="stat-card">
+            <div class="sc-label">This week</div>
+            <div class="sc-num" data-stat="added_this_week">—</div>
+            <div class="sc-meta">
+              <span>across 7 days</span>
+            </div>
+            <svg class="sc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          </div>
+
+          <div class="stat-card">
+            <div class="sc-label">Ongoing topics</div>
+            <div class="sc-num" data-stat="threads">—</div>
+            <div class="sc-meta">
+              <span data-stat="longest_followup">&nbsp;</span>
+            </div>
+            <svg class="sc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><path d="M6 9v6a3 3 0 0 0 3 3h6"/></svg>
+          </div>
+
+          <div class="stat-card">
+            <div class="sc-label">Storage used</div>
+            <div class="sc-num" data-stat-html="storage">—</div>
+            <div class="sc-meta">
+              <span>on this Mac</span>
+              <span style="color:var(--color-ink-senary);">·</span>
+              <a href="#" id="showInFinder" style="color:var(--color-ink-quaternary); text-decoration:none; font-weight:500;">show in Finder</a>
+            </div>
+            <svg class="sc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          </div>
+
+        </div>
+
+        <!-- Filter row + memory list, with side panel -->
+        <div class="split-panes">
+
+          <div>
+            <div class="section-header">
+              <h2>Recent memories</h2>
+              <span class="sh-meta" id="filterMeta"></span>
+            </div>
+
+            <div class="filter-row" id="filterRow"></div>
+
+            <div class="memory-list" id="memoryList"></div>
+          </div>
+
+          <aside class="side-panel">
+            <div>
+              <div class="sp-title">Activity · 14 days</div>
+              <div class="activity-bars" id="activityBars"></div>
+              <div class="activity-meta" style="margin-top:6px;">
+                <span>Apr 24</span>
+                <span>May 7</span>
+              </div>
+            </div>
+
+            <hr class="divider" />
+
+            <div>
+              <div class="sp-title">Folder</div>
+              <div style="margin-top:8px;">
+                <div class="kv-row"><span class="kv-key">Total</span><span class="kv-val" data-stat="total_memories_with_label">—</span></div>
+                <div class="kv-row"><span class="kv-key">Conversations</span><span class="kv-val" data-stat="threads">—</span></div>
+                <div class="kv-row"><span class="kv-key">All searchable</span><span class="kv-val" style="color:var(--color-good);">yes</span></div>
+                <div class="kv-row"><span class="kv-key">Last updated</span><span class="kv-val" style="font-weight:500;" data-stat="last_updated">—</span></div>
+              </div>
+              <button class="btn" id="showInFinderBtn" style="width:100%; justify-content:center; margin-top:10px; font-size:12px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                Show in Finder
+              </button>
+            </div>
+
+            <hr class="divider" />
+
+            <div>
+              <div class="sp-title">Status</div>
+              <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                  <span class="dot dot-good"></span>
+                  <span>Claude Desktop</span>
+                  <span style="margin-left:auto; font-size:12px; color:var(--color-ink-quaternary);">connected</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                  <span class="dot dot-good"></span>
+                  <span>Memory search</span>
+                  <span style="margin-left:auto; font-size:12px; color:var(--color-ink-quaternary);">ready</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                  <span class="dot dot-good"></span>
+                  <span>Background service</span>
+                  <span style="margin-left:auto; font-size:12px; color:var(--color-ink-quaternary);">running</span>
+                </div>
+              </div>
+              <div style="margin-top:12px; font-size:11px; color:var(--color-ink-quaternary); line-height:1.45; padding:8px 0; border-top:1px solid var(--color-border-subtle);">
+                Your memories are stored locally and remain yours whether or not your AI is running.
+              </div>
+            </div>
+          </aside>
+
+        </div>
+
+      </div>
+
+      <footer class="main-footer">
+        <span class="local-signature">
+          <span class="dot"></span>
+          local <span class="sep">·</span> private <span class="sep">·</span> yours
+        </span>
+        <span style="margin-left:auto;">Geniuz <span style="color:var(--color-ink-senary)">·</span> open source <span style="color:var(--color-ink-senary)">·</span> free forever</span>
+      </footer>
+
+    </main>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="tauri-bridge.js"></script>
+<script>
+window.GENIUZ_READY.then(() => {
+
+// --- Helpers ------------------------------------------------------------
+function fmtNum(n) {
+  if (n === null || n === undefined || Number.isNaN(n)) return '—';
+  return Number(n).toLocaleString();
+}
+function fmtBytes(bytes) {
+  if (!bytes && bytes !== 0) return ['—', ''];
+  if (bytes < 1024) return [bytes.toString(), 'B'];
+  if (bytes < 1024 * 1024) return [(bytes / 1024).toFixed(1), 'KB'];
+  if (bytes < 1024 * 1024 * 1024) return [(bytes / (1024 * 1024)).toFixed(1), 'MB'];
+  return [(bytes / (1024 * 1024 * 1024)).toFixed(2), 'GB'];
+}
+function fmtAgo(iso) {
+  if (!iso) return 'never';
+  const t = new Date(iso.replace(' ', 'T') + (iso.endsWith('Z') ? '' : 'Z')).getTime();
+  if (Number.isNaN(t)) return '—';
+  const s = Math.max(0, (Date.now() - t) / 1000);
+  if (s < 60) return `${Math.round(s)}s ago`;
+  if (s < 3600) return `${Math.round(s / 60)}m ago`;
+  if (s < 86400) return `${Math.round(s / 3600)}h ago`;
+  return `${Math.round(s / 86400)}d ago`;
+}
+
+// --- Stats: populate all [data-stat] and [data-stat-html] placeholders ---
+const stats = window.GENIUZ_STATS || {};
+const folder = window.GENIUZ_FOLDER || {};
+const [storageNum, storageUnit] = fmtBytes(stats.storage_bytes);
+
+const statValues = {
+  total_memories: fmtNum(stats.total_memories),
+  threads: fmtNum(stats.threads),
+  added_this_week: fmtNum(stats.added_this_week),
+  added_today: fmtNum(stats.added_today),
+  avg_per_day_30d: stats.avg_per_day_30d != null ? `${stats.avg_per_day_30d}/day` : '—',
+  this_week_summary: stats.added_this_week != null
+    ? `+${fmtNum(stats.added_this_week)} last 7 days · ~${stats.avg_per_day_30d ?? '—'}/day average`
+    : '—',
+  total_memories_with_label: stats.total_memories != null
+    ? `${fmtNum(stats.total_memories)} memories`
+    : '—',
+  last_updated: fmtAgo(stats.last_indexed),
+  longest_followup: '', // not yet exposed by the data layer
+};
+const statHtml = {
+  storage: `${storageNum}<span style="font-size:0.6em;color:var(--color-ink-tertiary);font-weight:500;margin-left:4px;">${storageUnit}</span>`,
+};
+document.querySelectorAll('[data-stat]').forEach(el => {
+  const v = statValues[el.dataset.stat];
+  if (v !== undefined) el.textContent = v;
+});
+document.querySelectorAll('[data-stat-html]').forEach(el => {
+  const v = statHtml[el.dataset.statHtml];
+  if (v !== undefined) el.innerHTML = v;
+});
+
+// --- Filter chips --------------------------------------------------------
+const filterRow = document.getElementById('filterRow');
+const filterMeta = document.getElementById('filterMeta');
+window.GENIUZ_FILTERS.forEach((f, i) => {
+  const chip = document.createElement('button');
+  chip.className = 'filter-chip' + (i === 0 ? ' active' : '');
+  chip.innerHTML = `${f.label}<span class="chip-count">${f.count}</span>`;
+  filterRow.appendChild(chip);
+});
+
+filterMeta.textContent =
+  `${window.GENIUZ_MEMORIES.length} of ${fmtNum(stats.total_memories)} shown · sorted by recency`;
+
+// --- Memory list ---------------------------------------------------------
+const list = document.getElementById('memoryList');
+window.GENIUZ_MEMORIES.slice(0, 12).forEach(m => {
+  const el = document.createElement('div');
+  el.className = 'memory-item';
+  const isThread = !!(m.parent_id || m.parent_uuid);
+  const tagStr = (m.tags || []).join(' · ');
+  el.innerHTML = `
+    <span class="m-marker ${isThread ? 'threaded' : ''}" aria-hidden="true"></span>
+    <div class="m-body">
+      <div class="m-gist">${window.renderMd(m.gist)}</div>
+      <div class="m-meta">
+        ${tagStr}
+        ${isThread ? '<span style="color:var(--color-ink-senary)">·</span><span style="color:var(--color-ink-tertiary)">↳ follow-up</span>' : ''}
+      </div>
+    </div>
+    <div class="m-time">${window.fmtTime(m.created_at)}</div>
+  `;
+  list.appendChild(el);
+});
+
+// --- Activity bars (14 days) --------------------------------------------
+const bars = document.getElementById('activityBars');
+const activity = window.GENIUZ_ACTIVITY_14D || [];
+const max = activity.length > 0 ? Math.max(1, ...activity) : 1;
+activity.forEach((v, i) => {
+  const bar = document.createElement('div');
+  bar.className = 'bar' + (v === max && v > 0 ? ' peak' : '');
+  bar.style.height = `${(v / max) * 100}%`;
+  bar.title = `${v} memories`;
+  bars.appendChild(bar);
+});
+
+// --- Interactivity: search, Show in Finder ------------------------------
+const searchInput = document.querySelector('.search-field input');
+if (searchInput && window.__TAURI__) {
+  const { invoke } = window.__TAURI__.core;
+  let searchTimer = null;
+  searchInput.addEventListener('input', (e) => {
+    const q = e.target.value.trim();
+    if (searchTimer) clearTimeout(searchTimer);
+    if (q.length < 2) return;
+    searchTimer = setTimeout(async () => {
+      try {
+        const results = await invoke('semantic_search', { query: q, limit: 20 });
+        // Re-render memory list with results
+        list.innerHTML = '';
+        results.forEach(r => {
+          const el = document.createElement('div');
+          el.className = 'memory-item';
+          const isThread = !!r.parent_uuid;
+          const tagStr = r.category ? r.category.toLowerCase() : '';
+          el.innerHTML = `
+            <span class="m-marker ${isThread ? 'threaded' : ''}" aria-hidden="true"></span>
+            <div class="m-body">
+              <div class="m-gist">${window.renderMd(r.gist)}</div>
+              <div class="m-meta">${tagStr}</div>
+            </div>
+            <div class="m-time">${window.fmtTime(r.created_at)}</div>
+          `;
+          list.appendChild(el);
+        });
+        filterMeta.textContent =
+          `${results.length} matches for "${q}" · ranked by meaning`;
+      } catch (err) {
+        console.error('[geniuz] semantic_search failed:', err);
+      }
+    }, 250);
+  });
+}
+
+if (window.__TAURI__) {
+  const { invoke } = window.__TAURI__.core;
+  const finderBtn = document.getElementById('showInFinderBtn');
+  const finderLink = document.getElementById('showInFinder');
+  const openDataDir = async () => {
+    try {
+      const dir = await invoke('get_data_dir');
+      // Invoke the opener plugin via its canonical plugin-command path.
+      // Works whether or not the plugin's JS namespace is auto-exposed.
+      await invoke('plugin:opener|open_path', { path: dir });
+    } catch (err) {
+      console.error('[geniuz] open data dir failed:', err);
+    }
+  };
+  if (finderBtn) finderBtn.addEventListener('click', openDataDir);
+  if (finderLink) finderLink.addEventListener('click', (e) => { e.preventDefault(); openDataDir(); });
+}
+
+}); // end window.GENIUZ_READY.then
+</script>
+
+</body>
+</html>

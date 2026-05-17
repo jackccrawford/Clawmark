@@ -344,6 +344,59 @@ impl DatabaseManager {
         Ok(c as usize)
     }
 
+    /// Count of distinct conversation roots (memories with no parent + orphan
+    /// groups). Each memory belongs to exactly one root via parent_uuid threading.
+    pub fn thread_count(&self) -> Result<usize, String> {
+        let conn = self.conn()?;
+        let c: i64 = conn.query_row(
+            "SELECT COUNT(DISTINCT COALESCE(parent_uuid, memory_uuid)) FROM memories",
+            [],
+            |r| r.get(0),
+        ).map_err(|e| format!("Thread count failed: {}", e))?;
+        Ok(c as usize)
+    }
+
+    /// Count of memories created in the last `days` days.
+    pub fn count_since_days(&self, days: u32) -> Result<usize, String> {
+        let conn = self.conn()?;
+        let modifier = format!("-{} days", days);
+        let c: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM memories WHERE created_at >= datetime('now', ?1)",
+            rusqlite::params![modifier],
+            |r| r.get(0),
+        ).map_err(|e| format!("Count-since-days failed: {}", e))?;
+        Ok(c as usize)
+    }
+
+    /// Daily memory counts for the last `days` days, ordered oldest-first.
+    /// Returns (date_iso, count) pairs for days that have activity. Days with
+    /// zero memories are omitted; callers fill zeros as needed for charting.
+    pub fn daily_activity(&self, days: u32) -> Result<Vec<(String, usize)>, String> {
+        let conn = self.conn()?;
+        let modifier = format!("-{} days", days);
+        let mut stmt = conn.prepare(
+            "SELECT date(created_at) as day, COUNT(*) as count
+             FROM memories
+             WHERE created_at >= datetime('now', ?1)
+             GROUP BY day ORDER BY day ASC",
+        ).map_err(|e| format!("Query failed: {}", e))?;
+        let rows = stmt.query_map(rusqlite::params![modifier], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? as usize))
+        }).map_err(|e| format!("Query failed: {}", e))?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+    }
+
+    /// Timestamp of the most recent memory (ISO 8601 UTC), or None if empty.
+    /// Used for "last write Xm ago" displays.
+    pub fn last_write_timestamp(&self) -> Result<Option<String>, String> {
+        let conn = self.conn()?;
+        conn.query_row(
+            "SELECT MAX(created_at) FROM memories",
+            [],
+            |row| row.get::<_, Option<String>>(0),
+        ).map_err(|e| format!("Query failed: {}", e))
+    }
+
     fn resolve_uuid(&self, partial: &str) -> Result<Option<String>, String> {
         if partial.len() == 36 { return Ok(Some(partial.to_uppercase())); }
         let conn = self.conn()?;
