@@ -9,6 +9,7 @@ use geniuz::db::{DatabaseManager, SignalEntry};
 use geniuz::settings::Settings;
 use serde::{Deserialize, Serialize};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
+use tauri::tray::TrayIconBuilder;
 use tauri::{Emitter, Manager};
 
 fn db_path() -> String {
@@ -384,8 +385,71 @@ pub fn run() {
             get_data_dir,
         ])
         .setup(|app| {
-            let menu = build_menu(app.handle())?;
+            let handle = app.handle();
+            let menu = build_menu(handle)?;
             app.set_menu(menu)?;
+
+            // Build native system tray. Subsumes the standalone geniuz-tray
+            // binary; this dashboard now owns the menubar/tray surface itself.
+            let tray_open = MenuItem::with_id(handle, "tray_open", "Open Dashboard", true, None::<&str>)?;
+            let tray_recent = MenuItem::with_id(handle, "tray_recent", "Recent", true, None::<&str>)?;
+            let tray_find = MenuItem::with_id(handle, "tray_find", "Find…", true, None::<&str>)?;
+            let tray_status = MenuItem::with_id(handle, "tray_status", "Status", true, None::<&str>)?;
+            let tray_settings = MenuItem::with_id(handle, "tray_settings", "Settings…", true, None::<&str>)?;
+            let tray_quit = PredefinedMenuItem::quit(handle, Some("Quit Geniuz"))?;
+
+            let tray_menu = Menu::with_items(
+                handle,
+                &[
+                    &tray_open,
+                    &PredefinedMenuItem::separator(handle)?,
+                    &tray_recent,
+                    &tray_find,
+                    &tray_status,
+                    &tray_settings,
+                    &PredefinedMenuItem::separator(handle)?,
+                    &tray_quit,
+                ],
+            )?;
+
+            let _tray = TrayIconBuilder::new()
+                .icon(app.default_window_icon().cloned().expect("default window icon"))
+                .menu(&tray_menu)
+                .show_menu_on_left_click(false) // single click opens dashboard; right-click for menu
+                .on_menu_event(|app, event| {
+                    let id = event.id().0.as_str();
+                    let Some(window) = app.get_webview_window("main") else { return };
+                    match id {
+                        "tray_open" => {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                        "tray_recent" | "tray_find" | "tray_status" | "tray_settings" => {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                            // Frontend listens for "tray-nav" and dispatches navigate().
+                            let _ = window.emit("tray-nav", id);
+                        }
+                        _ => {}
+                    }
+                })
+                .on_tray_icon_event(|tray, event| {
+                    use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                })
+                .build(app)?;
+
             Ok(())
         })
         .on_menu_event(|app, event| {

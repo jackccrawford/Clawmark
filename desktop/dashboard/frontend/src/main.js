@@ -86,32 +86,35 @@ async function renderSurface(mainHost) {
   if (myToken !== renderToken) return;
 }
 
-// Wire native menu events from Rust → surface navigation / actions.
-// IDs match those declared in build_menu() in src/lib.rs.
+// Wire native menu + tray events from Rust → surface navigation / actions.
+// IDs match those declared in setup() in src/lib.rs.
 async function wireMenuEvents() {
   if (!window.__TAURI__) return;
   const { listen } = window.__TAURI__.event;
-  await listen('menu', async (event) => {
-    const id = event.payload;
+
+  const handleNav = async (id) => {
     switch (id) {
       case 'menu_recent':
+      case 'tray_recent':
         navigate('recent');
         break;
       case 'menu_find':
+      case 'tray_find':
         navigate('find');
         break;
       case 'menu_status':
+      case 'tray_status':
         navigate('status');
         break;
       case 'menu_settings':
+      case 'tray_settings':
         navigate('settings');
         break;
       case 'menu_export':
         navigate('data');
         break;
       case 'menu_refresh':
-        // Force a re-render of the current surface by toggling the key.
-        // Setting state with an unchanged value still notifies subscribers.
+        // Force a re-render of the current surface via state-key bump.
         setState({ _refresh: Date.now() });
         break;
       case 'menu_website':
@@ -122,14 +125,15 @@ async function wireMenuEvents() {
         }
         break;
       case 'menu_about':
-        // Lightweight About — no modal yet; surface a console log + alert.
-        // Eventually this becomes a real About panel.
         alert(`Geniuz ${getState().appVersion || ''}\nManaged Ventures LLC\nhttps://geniuz.life`);
         break;
       default:
-        console.warn('[geniuz] unhandled menu event:', id);
+        console.warn('[geniuz] unhandled nav event:', id);
     }
-  });
+  };
+
+  await listen('menu', (event) => handleNav(event.payload));
+  await listen('tray-nav', (event) => handleNav(event.payload));
 }
 
 bootstrap();
