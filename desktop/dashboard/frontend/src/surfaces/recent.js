@@ -112,14 +112,15 @@ export async function mount(container) {
   const numbered = recent.map((m, i) => ({ ...m, _num: total - i }));
   const working = direction === 'asc' ? [...numbered].reverse() : numbered;
 
+  // Day-section headers (Today / Yesterday / Older) made the list feel busy
+  // when most memories were in one bucket — two stacked uppercase labels
+  // under the sort toggle. The per-row date already says when. Render the
+  // working list flat; grouping is still used for direction-reversal so
+  // sections stay in chronological order when ASC.
   const groups = groupByDaySection(working, direction);
-  for (const [label, items] of groups) {
+  for (const [, items] of groups) {
     const section = document.createElement('section');
     section.className = 'day-section';
-    const lbl = document.createElement('div');
-    lbl.className = 'day-section__label';
-    lbl.textContent = label;
-    section.appendChild(lbl);
 
     const list = document.createElement('div');
     list.className = 'memory-list';
