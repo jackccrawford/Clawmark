@@ -141,7 +141,7 @@ export async function mount(container) {
           <span class="memory-row__date">${escapeHtml(fmt.dateTime(m.created_at))}</span>
           ${trailing}
         </div>
-        <div class="memory-row__gist">${escapeHtml(m.gist || '(no gist)')}</div>
+        <div class="memory-row__gist">${formatGist(m.gist || '(no gist)')}</div>
       `;
       row.addEventListener('click', () => navigate('detail', { selectedMemoryUuid: m.uuid }));
       list.appendChild(row);
@@ -190,6 +190,25 @@ function groupByDaySection(memories, direction = 'desc') {
   if (thisWeek.length)  desc.push(['Earlier this week', thisWeek]);
   if (older.length)     desc.push(['Older', older]);
   return direction === 'asc' ? desc.reverse() : desc;
+}
+
+// Bold the convention-driven gist category — the short prefix before the
+// first colon (e.g. "substrate-discipline: failed to recall_recent..."
+// renders the leading "substrate-discipline" in semibold). Only bolds when
+// the colon falls within the first 40 characters and the prefix has no
+// internal spaces of more than one word — that filters out unrelated
+// colons inside long sentences ("12:00 PM", "use ratio of 3:1", etc.).
+function formatGist(gist) {
+  const colonIdx = gist.indexOf(':');
+  if (colonIdx > 0 && colonIdx < 40) {
+    const prefix = gist.slice(0, colonIdx);
+    // Require the prefix to look like a short tag: no more than 3 words.
+    const wordCount = prefix.trim().split(/\s+/).length;
+    if (wordCount <= 3 && prefix.trim().length > 0) {
+      return `<strong class="memory-row__gist-tag">${escapeHtml(prefix)}</strong>${escapeHtml(gist.slice(colonIdx))}`;
+    }
+  }
+  return escapeHtml(gist);
 }
 
 function escapeHtml(s) {
