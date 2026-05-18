@@ -10,7 +10,7 @@
 
 import * as api from '../api.js';
 import * as fmt from '../format.js';
-import { navigate } from '../store.js';
+import { navigate, getState, setState } from '../store.js';
 
 export async function mount(container) {
   container.innerHTML = `<div class="surface-loading">Loading your memory…</div>`;
@@ -39,12 +39,14 @@ export async function mount(container) {
   const root = document.createElement('main');
   root.className = 'main';
 
+  const direction = getState().sortDirection || 'desc';
+
   // Header
   const header = document.createElement('header');
   header.className = 'main-header';
   header.innerHTML = `
     <h1 class="main-header__title">Your memory</h1>
-    <p class="main-header__sub">Everything you've remembered, most recent first.</p>
+    <p class="main-header__sub">Everything you've remembered.</p>
   `;
   root.appendChild(header);
 
@@ -81,7 +83,36 @@ export async function mount(container) {
     return;
   }
 
-  const groups = groupByDaySection(recent);
+  // List controls — sort toggle. Sits above the day-grouped list.
+  const controls = document.createElement('div');
+  controls.className = 'list-controls';
+  const sortBtn = document.createElement('button');
+  sortBtn.type = 'button';
+  sortBtn.className = 'sort-toggle';
+  const arrowDown = `<svg class="sort-toggle__icon" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v8"/><path d="M3 7l3 3 3-3"/></svg>`;
+  const arrowUp   = `<svg class="sort-toggle__icon" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10V2"/><path d="M3 5l3-3 3 3"/></svg>`;
+  sortBtn.innerHTML = direction === 'desc'
+    ? `${arrowDown}<span>Newest first</span>`
+    : `${arrowUp}<span>Oldest first</span>`;
+  sortBtn.addEventListener('click', () => {
+    setState({ sortDirection: direction === 'desc' ? 'asc' : 'desc' });
+  });
+  controls.appendChild(sortBtn);
+  body.appendChild(controls);
+
+  // Memory "number": newest = total count, counts down stably regardless of
+  // sort direction. The number is assigned by position in newest-first order,
+  // so flipping to oldest-first just reverses the visual list — each memory
+  // keeps its number.
+  const total = stats.total_memories ?? recent.length;
+  const selectedUuid = getState().selectedMemoryUuid;
+
+  // Number each memory once based on its newest-first position. Then reverse
+  // the working list if asc — numbers stay stable per memory.
+  const numbered = recent.map((m, i) => ({ ...m, _num: total - i }));
+  const working = direction === 'asc' ? [...numbered].reverse() : numbered;
+
+  const groups = groupByDaySection(working, direction);
   for (const [label, items] of groups) {
     const section = document.createElement('section');
     section.className = 'day-section';
@@ -95,11 +126,21 @@ export async function mount(container) {
     for (const m of items) {
       const row = document.createElement('button');
       row.type = 'button';
-      row.className = 'memory-row';
+      row.className = m.uuid === selectedUuid ? 'memory-row is-current' : 'memory-row';
+      // When the memory has no category, omit the trailing separator and
+      // chip entirely. Empty placeholders make rows feel incomplete.
+      const trailing = m.category
+        ? `<span class="memory-row__sep">·</span>
+           <span class="memory-row__chip">${escapeHtml(m.category)}</span>`
+        : '';
       row.innerHTML = `
-        <span class="memory-row__gist">${escapeHtml(m.gist || '(no gist)')}</span>
-        ${m.category ? `<span class="memory-row__chip">${escapeHtml(m.category)}</span>` : '<span></span>'}
-        <span class="memory-row__time">${fmt.ago(m.created_at)}</span>
+        <div class="memory-row__meta">
+          <span class="memory-row__num">#${m._num}</span>
+          <span class="memory-row__sep">·</span>
+          <span class="memory-row__date">${escapeHtml(fmt.dateTime(m.created_at))}</span>
+          ${trailing}
+        </div>
+        <div class="memory-row__gist">${escapeHtml(m.gist || '(no gist)')}</div>
       `;
       row.addEventListener('click', () => navigate('detail', { selectedMemoryUuid: m.uuid }));
       list.appendChild(row);
@@ -121,7 +162,7 @@ export async function mount(container) {
 
 // ---- helpers ---------------------------------------------------------------
 
-function groupByDaySection(memories) {
+function groupByDaySection(memories, direction = 'desc') {
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const startOfYesterday = startOfToday - 24 * 60 * 60 * 1000;
@@ -141,12 +182,13 @@ function groupByDaySection(memories) {
     else                              older.push(m);
   }
 
-  const out = [];
-  if (today.length)     out.push(['Today', today]);
-  if (yesterday.length) out.push(['Yesterday', yesterday]);
-  if (thisWeek.length)  out.push(['Earlier this week', thisWeek]);
-  if (older.length)     out.push(['Older', older]);
-  return out;
+  // In asc order, oldest sections come first.
+  const desc = [];
+  if (today.length)     desc.push(['Today', today]);
+  if (yesterday.length) desc.push(['Yesterday', yesterday]);
+  if (thisWeek.length)  desc.push(['Earlier this week', thisWeek]);
+  if (older.length)     desc.push(['Older', older]);
+  return direction === 'asc' ? desc.reverse() : desc;
 }
 
 function escapeHtml(s) {
