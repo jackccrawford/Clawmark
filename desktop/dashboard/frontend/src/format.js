@@ -48,6 +48,19 @@ export function timeFull(iso) {
   });
 }
 
+// "May 5, 3:42 PM" — shorter than `timeFull`, drops the weekday. Used in the
+// Recent list meta strip where every row carries its own date.
+export function dateTime(iso) {
+  const d = parseSqliteIso(iso);
+  if (!d) return '—';
+  return d.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 export function dayPer(rate) {
   if (rate === null || rate === undefined || Number.isNaN(rate)) return '—';
   // Round to 1 decimal, trim trailing .0

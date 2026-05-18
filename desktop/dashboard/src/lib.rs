@@ -402,9 +402,13 @@ pub fn run() {
                 #[cfg(target_os = "macos")]
                 {
                     use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial, NSVisualEffectState};
+                    // Sidebar material — denser than HudWindow (which read as
+                    // too transparent), lighter than Menu/Popover. Sits
+                    // "between menubar glass and full-translucent window" —
+                    // what Finder and Mail use for their navigation panes.
                     if let Err(e) = apply_vibrancy(
                         &window,
-                        NSVisualEffectMaterial::HudWindow,
+                        NSVisualEffectMaterial::Sidebar,
                         Some(NSVisualEffectState::Active),
                         None,
                     ) {

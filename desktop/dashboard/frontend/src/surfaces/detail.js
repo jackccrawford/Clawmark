@@ -67,13 +67,24 @@ export async function mount(container) {
   const root = document.createElement('main');
   root.className = 'main';
 
-  // Header — gist as title, plain-prose metadata as subtitle.
+  // Header — back button (top-left), gist as title, plain-prose metadata.
   const header = document.createElement('header');
   header.className = 'main-header';
+  const returnTo = getState().returnTo || 'recent';
+  const returnLabel = returnTo === 'find' ? 'Find' : 'Recent';
   header.innerHTML = `
+    <button type="button" class="back-button" aria-label="Back to ${returnLabel}">
+      <svg class="back-button__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 3L5 8l5 5"/>
+      </svg>
+      <span>${returnLabel}</span>
+    </button>
     <h1 class="main-header__title">${escapeHtml(memory.gist || '(no gist)')}</h1>
     <p class="main-header__sub">${escapeHtml(subtitleLine(memory))}</p>
   `;
+  header.querySelector('.back-button').addEventListener('click', () => {
+    navigate(returnTo);
+  });
   root.appendChild(header);
 
   // Body
