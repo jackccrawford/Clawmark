@@ -389,6 +389,37 @@ pub fn run() {
             let menu = build_menu(handle)?;
             app.set_menu(menu)?;
 
+            // Native vibrancy — the window is `transparent: true` in
+            // tauri.conf.json; here we ask the OS to fill the chrome with
+            // its own translucent material. The dashboard then sits inside
+            // the system aesthetic instead of asserting a solid colour.
+            //
+            // Best-effort: if the OS API isn't available (older macOS,
+            // unsupported Windows build), we trace the error and continue —
+            // the dashboard still works, it just paints with the body
+            // background colour the frontend specifies.
+            if let Some(window) = app.get_webview_window("main") {
+                #[cfg(target_os = "macos")]
+                {
+                    use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial, NSVisualEffectState};
+                    if let Err(e) = apply_vibrancy(
+                        &window,
+                        NSVisualEffectMaterial::HudWindow,
+                        Some(NSVisualEffectState::Active),
+                        None,
+                    ) {
+                        eprintln!("[geniuz] vibrancy not applied: {e}");
+                    }
+                }
+                #[cfg(target_os = "windows")]
+                {
+                    use window_vibrancy::apply_acrylic;
+                    if let Err(e) = apply_acrylic(&window, Some((18, 18, 18, 125))) {
+                        eprintln!("[geniuz] acrylic not applied: {e}");
+                    }
+                }
+            }
+
             // Build native system tray. Subsumes the standalone geniuz-tray
             // binary; this dashboard now owns the menubar/tray surface itself.
             let tray_open = MenuItem::with_id(handle, "tray_open", "Open Dashboard", true, None::<&str>)?;

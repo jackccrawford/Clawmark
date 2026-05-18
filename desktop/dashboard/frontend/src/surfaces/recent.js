@@ -1,40 +1,41 @@
-// recent.js — the default surface. Stats, recent memories, activity, folder panel.
+// recent.js — home surface in Tool register.
+//
+// Stats strip mirrors the menubar popover language (Memories · Week · Threads).
+// Memories render as dense rows grouped by Today / Yesterday / Earlier this
+// week / Older. Click a row to open detail.
+//
+// Reference surface for the Tool register: parallel implementers of the other
+// five surfaces should match this register (system font, dense layout, hairline
+// dividers, hover at --bg-elevated, no decoration that doesn't earn its place).
 
 import * as api from '../api.js';
 import * as fmt from '../format.js';
-import { statCard } from '../components/statCard.js';
-import { memoryItem } from '../components/memoryItem.js';
-import { searchBox } from '../components/searchBox.js';
-import { activityChart } from '../components/activityChart.js';
-import { folderPanel } from '../components/folderPanel.js';
+import { navigate } from '../store.js';
 
 export async function mount(container) {
-  container.innerHTML = `
-    <div class="surface-loading">Loading your memory…</div>
-  `;
+  container.innerHTML = `<div class="surface-loading">Loading your memory…</div>`;
 
-  // Parallel data fetches — one round-trip per concern, all canonical-handler calls.
-  let stats, recent, activity;
+  let stats, recent;
   try {
-    [stats, recent, activity] = await Promise.all([
+    [stats, recent] = await Promise.all([
       api.getStationStats(),
-      api.getRecentMemories(24),
-      api.getActivity(14),
+      api.getRecentMemories(40),
     ]);
   } catch (e) {
     container.innerHTML = `
-      <div class="surface-error">
-        <h2>Couldn't read your station.</h2>
-        <p>${e.message || e}</p>
-        <p>Expected file: <code>~/.geniuz/memory.db</code></p>
-      </div>
+      <main class="main">
+        <div class="surface-error">
+          <h2>Couldn't read your station.</h2>
+          <p>${escapeHtml(e?.message || String(e))}</p>
+          <p>Expected file: <code>~/.geniuz/memory.db</code></p>
+        </div>
+      </main>
     `;
     return;
   }
 
   const [storageNum, storageUnit] = fmt.bytes(stats.storage_bytes);
 
-  // ---- Build the layout ------------------------------------------------
   const root = document.createElement('main');
   root.className = 'main';
 
@@ -42,161 +43,117 @@ export async function mount(container) {
   const header = document.createElement('header');
   header.className = 'main-header';
   header.innerHTML = `
-    <div>
-      <h1>Your memory</h1>
-      <p class="mh-sub">Saved by your AI agents <span style="color:var(--color-ink-senary)">·</span> stored on this Mac <span style="color:var(--color-ink-senary)">·</span> searchable by meaning</p>
-    </div>
-    <div class="mh-actions"></div>
+    <h1 class="main-header__title">Your memory</h1>
+    <p class="main-header__sub">Everything you've remembered, most recent first.</p>
   `;
-  const actions = header.querySelector('.mh-actions');
-  actions.appendChild(
-    searchBox({
-      placeholder: 'Search your memories…',
-      onQuery: (q) => handleSearch(q, listEl, metaEl, stats),
-    })
-  );
+  root.appendChild(header);
 
-  // Stat row
-  const statRow = document.createElement('div');
-  statRow.className = 'stat-row';
-  statRow.appendChild(
-    statCard({
-      label: 'Total memories',
-      value: fmt.number(stats.total_memories),
-      meta: `+${fmt.number(stats.this_week)} last 7 days · ~${fmt.dayPer(stats.daily_average_recent)}/day average`,
-      featured: true,
-    })
-  );
-  statRow.appendChild(
-    statCard({
-      label: 'This week',
-      value: fmt.number(stats.this_week),
-      meta: 'across 7 days',
-    })
-  );
-  statRow.appendChild(
-    statCard({
-      label: 'Ongoing topics',
-      value: fmt.number(stats.conversations),
-    })
-  );
-  statRow.appendChild(
-    statCard({
-      label: 'Storage used',
-      valueHtml: `${storageNum}<span style="font-size:0.6em;color:var(--color-ink-tertiary);font-weight:500;margin-left:4px;">${storageUnit}</span>`,
-      meta: 'on this Mac',
-    })
-  );
-
-  // Content row: memory list + folder panel
+  // Body
   const body = document.createElement('div');
   body.className = 'main-body';
-  body.innerHTML = `
-    <div class="content-col">
-      <div class="content-head">
-        <h2>Recent memories</h2>
-        <div class="filter-meta" id="filterMeta"></div>
-      </div>
-      <div class="memory-list" id="memoryList"></div>
-    </div>
-    <div class="side-col" id="sideCol"></div>
-  `;
-  const listEl = body.querySelector('#memoryList');
-  const metaEl = body.querySelector('#filterMeta');
-  const sideCol = body.querySelector('#sideCol');
-
-  // Folder panel
-  sideCol.appendChild(folderPanel({ stats }));
-
-  // Activity chart in the side column
-  const activityWrap = document.createElement('div');
-  activityWrap.className = 'side-panel';
-  activityWrap.innerHTML = '<div class="sp-title">Activity · 14 days</div>';
-  const activityDays = expandDaysIntoFull(activity, 14);
-  activityWrap.appendChild(activityChart({ days: activityDays }));
-  sideCol.appendChild(activityWrap);
-
-  // Footer
-  const footer = document.createElement('footer');
-  footer.className = 'main-footer';
-  footer.innerHTML = `
-    <span>${fmt.number(stats.total_memories)} memories indexed</span>
-    <span class="local-signature">
-      <span class="dot"></span>
-      local <span class="sep">·</span> private <span class="sep">·</span> yours
-    </span>
-  `;
-
-  // Render the initial recent list
-  renderList(listEl, recent, metaEl, stats.total_memories, 'sorted by recency');
-
-  // ---- Mount ----------------------------------------------------------
-  root.appendChild(header);
-  root.appendChild(statRow);
   root.appendChild(body);
-  root.appendChild(footer);
+
+  // Stats strip — mirrors the menubar popover (3 cells)
+  const strip = document.createElement('div');
+  strip.className = 'stats-strip';
+  strip.innerHTML = `
+    <div class="stats-strip__cell">
+      <div class="stats-strip__value">${fmt.number(stats.total_memories)}</div>
+      <div class="stats-strip__label">Memories</div>
+    </div>
+    <div class="stats-strip__cell">
+      <div class="stats-strip__value">${fmt.number(stats.this_week)}</div>
+      <div class="stats-strip__label">This week</div>
+    </div>
+    <div class="stats-strip__cell">
+      <div class="stats-strip__value">${fmt.number(stats.conversations)}</div>
+      <div class="stats-strip__label">Threads</div>
+    </div>
+  `;
+  body.appendChild(strip);
+
+  // Memory list — grouped by day-section
+  if (!recent || recent.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'surface-empty';
+    empty.textContent = 'No memories yet. Use the geniuz CLI or your MCP client to remember something.';
+    body.appendChild(empty);
+    return;
+  }
+
+  const groups = groupByDaySection(recent);
+  for (const [label, items] of groups) {
+    const section = document.createElement('section');
+    section.className = 'day-section';
+    const lbl = document.createElement('div');
+    lbl.className = 'day-section__label';
+    lbl.textContent = label;
+    section.appendChild(lbl);
+
+    const list = document.createElement('div');
+    list.className = 'memory-list';
+    for (const m of items) {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'memory-row';
+      row.innerHTML = `
+        <span class="memory-row__gist">${escapeHtml(m.gist || '(no gist)')}</span>
+        ${m.category ? `<span class="memory-row__chip">${escapeHtml(m.category)}</span>` : '<span></span>'}
+        <span class="memory-row__time">${fmt.ago(m.created_at)}</span>
+      `;
+      row.addEventListener('click', () => navigate('detail', { selectedMemoryUuid: m.uuid }));
+      list.appendChild(row);
+    }
+    section.appendChild(list);
+    body.appendChild(section);
+  }
+
+  // Footer disk size as a quiet line (knowledge-worker apps don't shout
+  // about their database size; they mention it).
+  const footer = document.createElement('div');
+  footer.style.cssText = 'margin-top:24px;padding:12px 0;color:var(--ink-3);font-size:var(--fs-micro);';
+  footer.textContent = `${storageNum} ${storageUnit} on this Mac`;
+  body.appendChild(footer);
+
   container.innerHTML = '';
   container.appendChild(root);
 }
 
-// Render the list with the given memories.
-function renderList(listEl, memories, metaEl, total, captionTail) {
-  listEl.innerHTML = '';
-  if (!memories || memories.length === 0) {
-    listEl.innerHTML = '<div class="empty-state">No memories to show.</div>';
-    if (metaEl) metaEl.textContent = '';
-    return;
-  }
-  for (const m of memories) listEl.appendChild(memoryItem(m));
-  if (metaEl) {
-    metaEl.textContent = `${memories.length} of ${total != null ? fmt.number(total) : '?'} ${captionTail}`;
-  }
-}
+// ---- helpers ---------------------------------------------------------------
 
-// Search handler. Empty query restores recent.
-async function handleSearch(query, listEl, metaEl, stats) {
-  if (!query) {
-    try {
-      const recent = await api.getRecentMemories(24);
-      renderList(listEl, recent, metaEl, stats.total_memories, 'sorted by recency');
-    } catch (e) {
-      console.error('[geniuz] recent reload failed:', e);
-    }
-    return;
-  }
-  try {
-    const results = await api.semanticSearch(query, 20);
-    listEl.innerHTML = '';
-    if (results.length === 0) {
-      listEl.innerHTML = `<div class="empty-state">No matches for "${escapeHtml(query)}".</div>`;
-    } else {
-      for (const r of results) listEl.appendChild(memoryItem(r));
-    }
-    if (metaEl) {
-      metaEl.textContent = `${results.length} matches for "${query}" · ranked by meaning`;
-    }
-  } catch (e) {
-    console.error('[geniuz] semantic_search failed:', e);
-    if (metaEl) metaEl.textContent = `Search failed: ${e.message || e}`;
-  }
-}
+function groupByDaySection(memories) {
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startOfYesterday = startOfToday - 24 * 60 * 60 * 1000;
+  const startOfThisWeek = startOfToday - 6 * 24 * 60 * 60 * 1000;
 
-// Given activity buckets (date, count) for days that had activity, expand to
-// a length-N array (oldest first) with zeros filled for missing days.
-function expandDaysIntoFull(buckets, days) {
-  if (!buckets) return [];
-  const map = new Map(buckets.map((b) => [b.date, b.count]));
+  const today = [];
+  const yesterday = [];
+  const thisWeek = [];
+  const older = [];
+
+  for (const m of memories) {
+    const d = fmt.parseSqliteIso(m.created_at);
+    const ts = d ? d.getTime() : 0;
+    if (ts >= startOfToday)         today.push(m);
+    else if (ts >= startOfYesterday) yesterday.push(m);
+    else if (ts >= startOfThisWeek)  thisWeek.push(m);
+    else                              older.push(m);
+  }
+
   const out = [];
-  const today = new Date();
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    const iso = d.toISOString().slice(0, 10);
-    out.push(map.get(iso) || 0);
-  }
+  if (today.length)     out.push(['Today', today]);
+  if (yesterday.length) out.push(['Yesterday', yesterday]);
+  if (thisWeek.length)  out.push(['Earlier this week', thisWeek]);
+  if (older.length)     out.push(['Older', older]);
   return out;
 }
 
 function escapeHtml(s) {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
