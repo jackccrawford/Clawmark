@@ -8,6 +8,7 @@
   },
   "app": {
     "withGlobalTauri": true,
+    "macOSPrivateApi": true,
     "windows": [
       {
         "title": "Geniuz — Station Dashboard",
@@ -16,7 +17,10 @@
         "minWidth": 900,
         "minHeight": 600,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "transparent": true,
+        "decorations": true,
+        "titleBarStyle": "Visible"
       }
     ],
     "security": {
