@@ -72,7 +72,7 @@ async function renderSurface(mainHost) {
   const s = getState();
   // Re-render when surface OR the surface-specific input changes
   // (selectedMemoryUuid for detail, searchQuery for find).
-  const key = `${s.currentSurface}|${s.selectedMemoryUuid || ''}|${s.searchQuery || ''}`;
+  const key = `${s.currentSurface}|${s.selectedMemoryUuid || ''}|${s.searchQuery || ''}|${s.sortDirection || 'desc'}`;
   if (key === lastRenderKey) return;
   lastRenderKey = key;
   const myToken = ++renderToken;
