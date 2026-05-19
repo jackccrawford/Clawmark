@@ -381,6 +381,17 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            // Re-launch attempt: focus the existing window instead of
+            // spawning a new process. Fixes the "taskbar click opens
+            // another dashboard window" bug on Windows.
+            use tauri::Manager;
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.unminimize();
+                let _ = window.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_deep_link::init())
@@ -436,6 +447,18 @@ pub fn run() {
                     use window_vibrancy::apply_acrylic;
                     if let Err(e) = apply_acrylic(&window, Some((18, 18, 18, 125))) {
                         eprintln!("[geniuz] acrylic not applied: {e}");
+                    }
+                }
+                #[cfg(target_os = "linux")]
+                {
+                    // No native vibrancy backend on Linux — the window was
+                    // created transparent for Mac's NSVisualEffectMaterial.
+                    // Paint a solid background so the dashboard isn't
+                    // completely see-through. Off-white matches the Mac
+                    // light-mode register; the body CSS sits on top.
+                    use tauri::webview::Color;
+                    if let Err(e) = window.set_background_color(Some(Color(245, 245, 247, 255))) {
+                        eprintln!("[geniuz] linux background not applied: {e}");
                     }
                 }
             }

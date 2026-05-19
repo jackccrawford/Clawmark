@@ -33,6 +33,79 @@ fn default_claw_workspace() -> PathBuf {
     home_dir().join(".openclaw").join("workspace")
 }
 
+/// Locate and launch the Geniuz Dashboard binary.
+///
+/// On macOS, prefers the `geniuz://` URL scheme (registered by the dashboard
+/// .app's Info.plist) which the OS routes via Launch Services. Falls back to
+/// known install paths and a dev fallback for cargo builds.
+///
+/// On Linux and Windows, searches known install paths for the dashboard
+/// binary and spawns it as a subprocess. Returns an error string if the
+/// dashboard isn't installed.
+fn launch_dashboard() -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        // Try the URL scheme first — works regardless of install location.
+        let status = std::process::Command::new("open")
+            .arg("geniuz://open")
+            .status();
+        if let Ok(s) = status {
+            if s.success() {
+                return Ok(());
+            }
+        }
+        // Fallback: open the .app directly from known locations.
+        for path in [
+            "/Applications/Geniuz.app/Contents/Resources/Geniuz.app",
+            "/Applications/Geniuz.app", // if the menubar host bundle is the dashboard
+        ] {
+            if std::path::Path::new(path).exists() {
+                let _ = std::process::Command::new("open").arg(path).spawn()
+                    .map_err(|e| format!("Failed to launch dashboard: {e}"))?;
+                return Ok(());
+            }
+        }
+        return Err("Geniuz Dashboard not found. Install Geniuz.dmg from https://geniuz.life".into());
+    }
+    #[cfg(target_os = "linux")]
+    {
+        let candidates = [
+            "/usr/bin/geniuz-dashboard",
+            "/usr/local/bin/geniuz-dashboard",
+        ];
+        for path in candidates {
+            if std::path::Path::new(path).exists() {
+                std::process::Command::new(path).spawn()
+                    .map_err(|e| format!("Failed to launch dashboard: {e}"))?;
+                return Ok(());
+            }
+        }
+        return Err("Geniuz Dashboard not found. Install the .deb/.rpm/.AppImage from https://geniuz.life".into());
+    }
+    #[cfg(target_os = "windows")]
+    {
+        // Look in standard install dirs. The NSIS installer places the
+        // dashboard under %ProgramFiles% (system install) or %LOCALAPPDATA%
+        // (per-user install).
+        let candidates = [
+            std::env::var("ProgramFiles").ok().map(|p| format!("{p}\\Geniuz\\geniuz-dashboard.exe")),
+            std::env::var("LOCALAPPDATA").ok().map(|p| format!("{p}\\Programs\\Geniuz\\geniuz-dashboard.exe")),
+        ];
+        for path in candidates.into_iter().flatten() {
+            if std::path::Path::new(&path).exists() {
+                std::process::Command::new(&path).spawn()
+                    .map_err(|e| format!("Failed to launch dashboard: {e}"))?;
+                return Ok(());
+            }
+        }
+        return Err("Geniuz Dashboard not found. Install Geniuz-Setup.exe from https://geniuz.life".into());
+    }
+    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+    {
+        Err("Geniuz Dashboard is not available on this platform".into())
+    }
+}
+
 pub fn get_db() -> Result<db::DatabaseManager, String> {
     // Precedence: GENIUZ_STATION (explicit DB file path) > GENIUZ_HOME-derived default
     //             > legacy ~/.geniuz/station.db
@@ -83,6 +156,11 @@ fn run(cli: Cli) -> Result<String, String> {
 
         Command::Tui => {
             tui::run()?;
+            Ok(String::new())
+        }
+
+        Command::Dashboard => {
+            launch_dashboard()?;
             Ok(String::new())
         }
 

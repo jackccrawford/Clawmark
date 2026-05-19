@@ -1,6 +1,6 @@
 [package]
 name = "geniuz-dashboard"
-version = "2.0.0"
+version = "2.0.1"
 edition = "2021"
 description = "Geniuz dashboard — native Tauri app for Windows + Mac"
 license = "MIT"
@@ -22,6 +22,7 @@ tauri = { version = "2", features = ["macos-private-api", "tray-icon"] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-deep-link = "2"
+tauri-plugin-single-instance = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 

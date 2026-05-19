@@ -179,6 +179,13 @@ pub enum Command {
     )]
     Tui,
 
+    /// Launch the graphical dashboard app
+    #[command(
+        alias = "gui",
+        after_help = "Launches the Geniuz Dashboard window. The dashboard is the\ngraphical companion to the CLI — same memories, same data layer,\nbut rendered as a native window with sidebar nav and surfaces for\nMemories, Remember, Find, Status, Data & Export, and Settings.\n\nResolves the dashboard binary from known install locations per\nplatform. Errors with a helpful message if the dashboard isn't\ninstalled (e.g. CLI-only install via curl install.sh)."
+    )]
+    Dashboard,
+
     /// MCP server for Claude Desktop — run, install, or check status
     #[command(subcommand)]
     Mcp(McpCommand),
