@@ -885,6 +885,43 @@ a { color: inherit; text-decoration: none; }
   color: var(--ink-1);
 }
 
+/* --- Linux-specific contrast overlay ----------------------------------------
+   The design is built around macOS NSVisualEffectMaterial vibrancy: surfaces
+   are alpha-blended white-over-vibrancy, hairlines are alpha-black. On Linux
+   without a vibrancy backend, the window sits on a solid mid-light gray
+   (set in Rust). These overrides give the alpha-blended elements concrete
+   colors so they stay visible. Applied via the `os-linux` class injected
+   by setup() once the webview loads.
+   --------------------------------------------------------------------------- */
+html.os-linux body {
+  background: rgb(228, 228, 232);
+}
+html.os-linux .sidebar,
+html.os-linux .stats-strip,
+html.os-linux .data-card,
+html.os-linux .memory-row,
+html.os-linux .memory-row.is-current,
+html.os-linux .find-input,
+html.os-linux .find-mode-toggle,
+html.os-linux .remember-field__input,
+html.os-linux .remember-field__textarea {
+  background: rgba(255, 255, 255, 0.55);
+}
+html.os-linux .memory-row:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+html.os-linux .memory-row.is-current {
+  background: rgba(255, 255, 255, 0.92);
+}
+html.os-linux .find-mode-toggle button.is-active {
+  background: white;
+}
+html.os-linux {
+  --hairline-1: rgba(0, 0, 0, 0.14);
+  --hairline-2: rgba(0, 0, 0, 0.22);
+  --rule: rgba(0, 0, 0, 0.18);
+}
+
 /* --- Remember surface ---------------------------------------------------- */
 
 .remember-form {

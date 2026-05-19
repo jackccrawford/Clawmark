@@ -451,15 +451,23 @@ pub fn run() {
                 }
                 #[cfg(target_os = "linux")]
                 {
-                    // No native vibrancy backend on Linux — the window was
-                    // created transparent for Mac's NSVisualEffectMaterial.
-                    // Paint a solid background so the dashboard isn't
-                    // completely see-through. Off-white matches the Mac
-                    // light-mode register; the body CSS sits on top.
+                    // No native vibrancy backend on Linux. Paint a
+                    // medium-light gray (~Mac sidebar material solid
+                    // equivalent) so the alpha-blended surfaces and
+                    // hairlines the design relies on have something to
+                    // contrast against. Pure white would make 4%-white
+                    // surfaces and 8%-black hairlines invisible.
                     use tauri::webview::Color;
-                    if let Err(e) = window.set_background_color(Some(Color(245, 245, 247, 255))) {
+                    if let Err(e) = window.set_background_color(Some(Color(228, 228, 232, 255))) {
                         eprintln!("[geniuz] linux background not applied: {e}");
                     }
+                    // Tag <html> with `os-linux` once the page is loaded
+                    // so CSS can apply solid-color overrides for the
+                    // surfaces and rows that lose contrast on a solid
+                    // backdrop.
+                    let _ = window.eval(
+                        "document.documentElement.classList.add('os-linux');"
+                    );
                 }
             }
 
