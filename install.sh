@@ -168,29 +168,122 @@ if [ -n "$SYMLINK_DIR" ]; then
   echo "  Linked to ${SYMLINK_DIR}/geniuz"
 fi
 
-# Verify
-if "${INSTALL_DIR}/geniuz" --version > /dev/null 2>&1; then
-  VERSION=$("${INSTALL_DIR}/geniuz" --version)
-  echo ""
-  echo "  Installed: ${VERSION}"
-  echo "  Location:  ${GENIUZ_HOME}/"
-  echo ""
-
-  # Check if geniuz is on PATH now
-  if command -v geniuz > /dev/null 2>&1; then
-    echo "  Ready to use: geniuz"
-  elif [ -n "$SYMLINK_DIR" ]; then
-    case ":$PATH:" in
-      *":${SYMLINK_DIR}:"*) echo "  Ready to use: geniuz" ;;
-      *) echo "  Add to PATH: export PATH=\"${SYMLINK_DIR}:\$PATH\"" ;;
-    esac
-  else
-    echo "  Add to PATH: export PATH=\"${INSTALL_DIR}:\$PATH\""
-  fi
-
-  echo ""
-  echo "  Next: geniuz remember -c \"Hello from Geniuz\" -g \"first memory\""
-else
+# Verify CLI
+if ! "${INSTALL_DIR}/geniuz" --version > /dev/null 2>&1; then
   echo "Installation failed" >&2
   exit 1
 fi
+VERSION=$("${INSTALL_DIR}/geniuz" --version)
+
+echo ""
+echo "  Installed CLI: ${VERSION}"
+echo "  Location:      ${GENIUZ_HOME}/"
+
+# Dashboard install (Linux only, graphical session only)
+DASHBOARD_INSTALLED=""
+DASHBOARD_SKIPPED_REASON=""
+if [ "$os" = "linux" ]; then
+  if [ -n "$GENIUZ_NO_DASHBOARD" ]; then
+    DASHBOARD_SKIPPED_REASON="GENIUZ_NO_DASHBOARD set"
+  elif [ -z "$DISPLAY" ] && [ -z "$WAYLAND_DISPLAY" ]; then
+    DASHBOARD_SKIPPED_REASON="no graphical session ($DISPLAY/$WAYLAND_DISPLAY unset)"
+  elif [ "$arch" != "amd64" ]; then
+    DASHBOARD_SKIPPED_REASON="dashboard package not built for ${arch} yet"
+  else
+    # Pick package format
+    DEB_URL="https://github.com/${REPO}/releases/download/${LATEST}/Geniuz_${LATEST#v}_amd64.deb"
+    RPM_URL="https://github.com/${REPO}/releases/download/${LATEST}/Geniuz-${LATEST#v}-1.x86_64.rpm"
+    APPIMAGE_URL="https://github.com/${REPO}/releases/download/${LATEST}/Geniuz_${LATEST#v}_amd64.AppImage"
+
+    if command -v dpkg > /dev/null 2>&1 && command -v apt-get > /dev/null 2>&1; then
+      PKG_FMT="deb"; PKG_URL="$DEB_URL"
+    elif command -v rpm > /dev/null 2>&1 && (command -v dnf > /dev/null 2>&1 || command -v yum > /dev/null 2>&1); then
+      PKG_FMT="rpm"; PKG_URL="$RPM_URL"
+    else
+      PKG_FMT="appimage"; PKG_URL="$APPIMAGE_URL"
+    fi
+
+    echo ""
+    echo "  Dashboard:     fetching ${PKG_FMT} (${LATEST})..."
+    DASH_TMP=$(mktemp -d)
+    DASH_FILE="${DASH_TMP}/$(basename "$PKG_URL")"
+    if ! curl -fsSL "$PKG_URL" -o "$DASH_FILE"; then
+      echo "  Dashboard:     download failed (${PKG_URL})"
+      DASHBOARD_SKIPPED_REASON="download failed"
+      rm -rf "$DASH_TMP"
+    else
+      echo ""
+      echo "  Installing the dashboard requires sudo. You'll be prompted for your password."
+      echo ""
+      case "$PKG_FMT" in
+        deb)
+          if sudo dpkg -i "$DASH_FILE" 2>/dev/null; then
+            DASHBOARD_INSTALLED=1
+          else
+            # Resolve missing deps and retry
+            sudo apt-get install -f -y >/dev/null 2>&1 || true
+            sudo dpkg -i "$DASH_FILE" && DASHBOARD_INSTALLED=1 || \
+              DASHBOARD_SKIPPED_REASON="dpkg install failed"
+          fi
+          ;;
+        rpm)
+          if command -v dnf > /dev/null 2>&1; then
+            sudo dnf install -y "$DASH_FILE" && DASHBOARD_INSTALLED=1 || \
+              DASHBOARD_SKIPPED_REASON="dnf install failed"
+          else
+            sudo yum install -y "$DASH_FILE" && DASHBOARD_INSTALLED=1 || \
+              DASHBOARD_SKIPPED_REASON="yum install failed"
+          fi
+          ;;
+        appimage)
+          mkdir -p "${GENIUZ_HOME}/apps"
+          APPIMAGE_DEST="${GENIUZ_HOME}/apps/geniuz-dashboard.AppImage"
+          cp "$DASH_FILE" "$APPIMAGE_DEST"
+          chmod +x "$APPIMAGE_DEST"
+          # Symlink into /usr/local/bin so `geniuz dashboard` resolves it
+          if sudo ln -sf "$APPIMAGE_DEST" /usr/local/bin/geniuz-dashboard; then
+            DASHBOARD_INSTALLED=1
+          else
+            DASHBOARD_SKIPPED_REASON="symlink to /usr/local/bin failed"
+          fi
+          ;;
+      esac
+      rm -rf "$DASH_TMP"
+    fi
+  fi
+fi
+
+echo ""
+echo "  Next steps:"
+
+# CLI run hint
+if command -v geniuz > /dev/null 2>&1; then
+  echo "    Run the CLI:        geniuz"
+elif [ -n "$SYMLINK_DIR" ]; then
+  case ":$PATH:" in
+    *":${SYMLINK_DIR}:"*) echo "    Run the CLI:        geniuz" ;;
+    *) echo "    Run the CLI:        geniuz  (after: export PATH=\"${SYMLINK_DIR}:\$PATH\")" ;;
+  esac
+else
+  echo "    Run the CLI:        geniuz  (after: export PATH=\"${INSTALL_DIR}:\$PATH\")"
+fi
+
+# Dashboard hint
+if [ "$os" = "linux" ]; then
+  if [ -n "$DASHBOARD_INSTALLED" ]; then
+    echo "    Open the dashboard: geniuz dashboard"
+  elif [ -n "$DASHBOARD_SKIPPED_REASON" ]; then
+    echo "    Dashboard skipped:  ${DASHBOARD_SKIPPED_REASON}"
+    echo "                        Install later: re-run with a graphical session,"
+    echo "                        or grab the package from https://github.com/${REPO}/releases/latest"
+  fi
+elif [ "$os" = "darwin" ]; then
+  if [ -d "/Applications/Geniuz.app" ]; then
+    echo "    Open the dashboard: geniuz dashboard  (or open Geniuz in /Applications)"
+  else
+    echo "    Dashboard for Mac:  download Geniuz.dmg from https://geniuz.life"
+  fi
+fi
+
+echo ""
+echo "    First memory:       geniuz remember -c \"Hello from Geniuz\" -g \"first memory\""
