@@ -3,6 +3,7 @@
 import * as api from './api.js';
 import { sidebar } from './components/sidebar.js';
 import * as recent from './surfaces/recent.js';
+import * as remember from './surfaces/remember.js';
 import * as detail from './surfaces/detail.js';
 import * as find from './surfaces/find.js';
 import * as status from './surfaces/status.js';
@@ -18,6 +19,7 @@ if (window.__TAURI__) {
 
 const SURFACE_MOUNTS = {
   recent: recent.mount,
+  remember: remember.mount,
   detail: detail.mount,
   find: find.mount,
   status: status.mount,
@@ -70,9 +72,11 @@ let renderToken = 0;
 let lastRenderKey = null;
 async function renderSurface(mainHost) {
   const s = getState();
-  // Re-render when surface OR the surface-specific input changes
-  // (selectedMemoryUuid for detail, searchQuery for find).
-  const key = `${s.currentSurface}|${s.selectedMemoryUuid || ''}|${s.searchQuery || ''}|${s.sortDirection || 'desc'}`;
+  // Re-render when surface OR a navigation input changes
+  // (selectedMemoryUuid for detail, sortDirection for memory list ordering).
+  // searchQuery is deliberately NOT in the key — find is now submit-based, so
+  // typing should mirror to state without triggering a remount + re-search.
+  const key = `${s.currentSurface}|${s.selectedMemoryUuid || ''}|${s.sortDirection || 'desc'}`;
   if (key === lastRenderKey) return;
   lastRenderKey = key;
   const myToken = ++renderToken;

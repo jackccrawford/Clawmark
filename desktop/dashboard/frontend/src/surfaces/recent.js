@@ -78,8 +78,15 @@ export async function mount(container) {
   if (!recent || recent.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'surface-empty';
-    empty.textContent = 'No memories yet. Use the geniuz CLI or your MCP client to remember something.';
+    empty.innerHTML = `
+      <p>No memories yet.</p>
+      <p>Click <button type="button" class="surface-empty__link" data-action="go-remember">Remember</button> in the sidebar to save your first one.</p>
+    `;
+    const goBtn = empty.querySelector('[data-action="go-remember"]');
+    if (goBtn) goBtn.addEventListener('click', () => navigate('remember'));
     body.appendChild(empty);
+    container.innerHTML = '';
+    container.appendChild(root);
     return;
   }
 
@@ -128,18 +135,13 @@ export async function mount(container) {
       const row = document.createElement('button');
       row.type = 'button';
       row.className = m.uuid === selectedUuid ? 'memory-row is-current' : 'memory-row';
-      // When the memory has no category, omit the trailing separator and
-      // chip entirely. Empty placeholders make rows feel incomplete.
-      const trailing = m.category
-        ? `<span class="memory-row__sep">·</span>
-           <span class="memory-row__chip">${escapeHtml(m.category)}</span>`
-        : '';
+      // Category lives inline in the gist (formatGist bolds the prefix).
+      // No separate chip — one visual anchor per row, matching the TUI.
       row.innerHTML = `
         <div class="memory-row__meta">
           <span class="memory-row__num">#${m._num}</span>
           <span class="memory-row__sep">·</span>
           <span class="memory-row__date">${escapeHtml(fmt.dateTime(m.created_at))}</span>
-          ${trailing}
         </div>
         <div class="memory-row__gist">${formatGist(m.gist || '(no gist)')}</div>
       `;
@@ -199,16 +201,21 @@ function groupByDaySection(memories, direction = 'desc') {
 // internal spaces of more than one word — that filters out unrelated
 // colons inside long sentences ("12:00 PM", "use ratio of 3:1", etc.).
 function formatGist(gist) {
-  const colonIdx = gist.indexOf(':');
-  if (colonIdx > 0 && colonIdx < 40) {
-    const prefix = gist.slice(0, colonIdx);
-    // Require the prefix to look like a short tag: no more than 3 words.
-    const wordCount = prefix.trim().split(/\s+/).length;
-    if (wordCount <= 3 && prefix.trim().length > 0) {
-      return `<strong class="memory-row__gist-tag">${escapeHtml(prefix)}</strong>${escapeHtml(gist.slice(colonIdx))}`;
-    }
+  // Find the earliest separator: |, ;, or :. Matches the TUI's split_gist
+  // discipline so the dashboard's inline-bold category and the TUI's cyan
+  // category render the same way.
+  const positions = ['|', ';', ':']
+    .map((c) => gist.indexOf(c))
+    .filter((i) => i > 0 && i < 40);
+  if (positions.length === 0) return escapeHtml(gist);
+  const sepIdx = Math.min(...positions);
+  const prefix = gist.slice(0, sepIdx);
+  // Require the prefix to look like a short tag: no more than 3 words.
+  const wordCount = prefix.trim().split(/\s+/).length;
+  if (wordCount > 3 || prefix.trim().length === 0) {
+    return escapeHtml(gist);
   }
-  return escapeHtml(gist);
+  return `<strong class="memory-row__gist-tag">${escapeHtml(prefix)}</strong>${escapeHtml(gist.slice(sepIdx))}`;
 }
 
 function escapeHtml(s) {

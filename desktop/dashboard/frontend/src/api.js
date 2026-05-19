@@ -24,6 +24,15 @@ export function getRecentMemories(limit = 24) {
   return invoke('get_recent_memories', { limit });
 }
 
+/**
+ * Save a new memory. `gist` is optional — null/empty means the chassis
+ * auto-derives one from the first 200 chars of content. Returns the short
+ * (8-char) UUID prefix of the new memory.
+ */
+export function rememberMemory(gist, content) {
+  return invoke('remember_memory', { gist: gist || null, content });
+}
+
 export function getActivity(days = 14) {
   return invoke('get_activity', { days });
 }

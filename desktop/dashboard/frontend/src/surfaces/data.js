@@ -121,9 +121,26 @@ export async function mount(container) {
   exportBtn.addEventListener('click', async () => {
     if (!dataDir) return;
     const suggested = defaultExportPath(dataDir);
-    const targetPath = window.prompt('Export to (full path):', suggested);
+
+    // Native save dialog via tauri-plugin-dialog. window.prompt() is
+    // unavailable in WKWebView, so we ask the OS for a Save As panel.
+    let targetPath = null;
+    try {
+      const { save } = window.__TAURI__.dialog || {};
+      if (typeof save === 'function') {
+        targetPath = await save({
+          defaultPath: suggested,
+          title: 'Export memory.db',
+          filters: [{ name: 'SQLite database', extensions: ['db'] }],
+        });
+      }
+    } catch (e) {
+      exportResult.style.cssText = `margin-top:var(--s-3);font-size:var(--fs-micro);color:var(--status-bad);`;
+      exportResult.textContent = `Couldn't open save panel: ${e?.message || String(e)}`;
+      return;
+    }
     if (!targetPath) {
-      // User cancelled.
+      // User cancelled or dialog unavailable.
       exportResult.textContent = '';
       exportResult.removeAttribute('style');
       exportResult.style.cssText = 'margin-top:var(--s-3);font-size:var(--fs-micro);';

@@ -9,7 +9,6 @@ use geniuz::db::{DatabaseManager, SignalEntry};
 use geniuz::settings::Settings;
 use serde::{Deserialize, Serialize};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
-use tauri::tray::TrayIconBuilder;
 use tauri::{Emitter, Manager};
 
 fn db_path() -> String {
@@ -88,6 +87,16 @@ struct SettingsPatch {
 #[tauri::command]
 fn get_app_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
+}
+
+/// Persist a new memory. `gist` is optional — if blank/None, the chassis
+/// auto-derives one from the first 200 chars of content. Returns the short
+/// (8-char) UUID prefix of the new memory.
+#[tauri::command]
+fn remember_memory(gist: Option<String>, content: String) -> Result<String, String> {
+    let db = open_db()?;
+    let gist_trimmed = gist.as_ref().map(|s| s.trim()).filter(|s| !s.is_empty());
+    db.signal(content.trim(), gist_trimmed, None, None)
 }
 
 #[tauri::command]
@@ -234,14 +243,23 @@ fn get_data_dir() -> String {
 // Helpers
 // -------------------------------------------------------------------------
 
+/// Extract a category from a gist by splitting on the earliest separator
+/// (`|`, `;`, or `:`). Returns `None` when no separator is present, the
+/// prefix is empty, or the prefix is too long to be a shelf label (>= 40
+/// chars). Matches the TUI's `split_gist` discipline so the dashboard chip
+/// and the TUI category render the same way.
+fn extract_category(gist: &str) -> Option<String> {
+    let positions = [gist.find('|'), gist.find(';'), gist.find(':')];
+    let earliest = positions.into_iter().flatten().min()?;
+    let cat = gist[..earliest].trim().to_string();
+    if cat.is_empty() || cat.len() >= 40 {
+        return None;
+    }
+    Some(cat)
+}
+
 fn map_recent(e: SignalEntry) -> RecentMemory {
-    // First field of pipe-thoughtform gist is conventionally the category.
-    let category = e
-        .gist
-        .split('|')
-        .next()
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty() && s.len() < 40);
+    let category = extract_category(&e.gist);
     RecentMemory {
         uuid: e.memory_uuid,
         gist: e.gist,
@@ -253,12 +271,7 @@ fn map_recent(e: SignalEntry) -> RecentMemory {
 }
 
 fn map_detail(e: SignalEntry) -> MemoryDetail {
-    let category = e
-        .gist
-        .split('|')
-        .next()
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty() && s.len() < 40);
+    let category = extract_category(&e.gist);
     MemoryDetail {
         uuid: e.memory_uuid,
         gist: e.gist,
@@ -369,8 +382,11 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_deep_link::init())
         .invoke_handler(tauri::generate_handler![
             get_app_version,
+            remember_memory,
             get_station_stats,
             get_recent_memories,
             get_activity,
@@ -424,66 +440,16 @@ pub fn run() {
                 }
             }
 
-            // Build native system tray. Subsumes the standalone geniuz-tray
-            // binary; this dashboard now owns the menubar/tray surface itself.
-            let tray_open = MenuItem::with_id(handle, "tray_open", "Open Dashboard", true, None::<&str>)?;
-            let tray_recent = MenuItem::with_id(handle, "tray_recent", "Recent", true, None::<&str>)?;
-            let tray_find = MenuItem::with_id(handle, "tray_find", "Find…", true, None::<&str>)?;
-            let tray_status = MenuItem::with_id(handle, "tray_status", "Status", true, None::<&str>)?;
-            let tray_settings = MenuItem::with_id(handle, "tray_settings", "Settings…", true, None::<&str>)?;
-            let tray_quit = PredefinedMenuItem::quit(handle, Some("Quit Geniuz"))?;
-
-            let tray_menu = Menu::with_items(
-                handle,
-                &[
-                    &tray_open,
-                    &PredefinedMenuItem::separator(handle)?,
-                    &tray_recent,
-                    &tray_find,
-                    &tray_status,
-                    &tray_settings,
-                    &PredefinedMenuItem::separator(handle)?,
-                    &tray_quit,
-                ],
-            )?;
-
-            let _tray = TrayIconBuilder::new()
-                .icon(app.default_window_icon().cloned().expect("default window icon"))
-                .menu(&tray_menu)
-                .show_menu_on_left_click(false) // single click opens dashboard; right-click for menu
-                .on_menu_event(|app, event| {
-                    let id = event.id().0.as_str();
-                    let Some(window) = app.get_webview_window("main") else { return };
-                    match id {
-                        "tray_open" => {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                        }
-                        "tray_recent" | "tray_find" | "tray_status" | "tray_settings" => {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                            // Frontend listens for "tray-nav" and dispatches navigate().
-                            let _ = window.emit("tray-nav", id);
-                        }
-                        _ => {}
-                    }
-                })
-                .on_tray_icon_event(|tray, event| {
-                    use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
-                    if let TrayIconEvent::Click {
-                        button: MouseButton::Left,
-                        button_state: MouseButtonState::Up,
-                        ..
-                    } = event
-                    {
-                        let app = tray.app_handle();
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                        }
-                    }
-                })
-                .build(app)?;
+            // Tray icon intentionally disabled. The Geniuz menubar app (SwiftUI,
+            // in desktop/Geniuz/) owns the macOS menubar surface; running a Tauri
+            // tray here would double the menubar item. Launch flow: the menubar
+            // app's "Open Dashboard" command spawns this binary as a subprocess.
+            //
+            // When the Mac native SwiftUI dashboard lands in 2.1, both the
+            // menubar and the dashboard window will live in a single Swift
+            // process — and this Tauri binary retires from the Mac surface
+            // entirely (still ships on Windows + Linux).
+            let _ = handle; // silence unused warning when tray is disabled
 
             Ok(())
         })
