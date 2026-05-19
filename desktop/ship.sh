@@ -8,6 +8,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DESKTOP="$ROOT/desktop"
 CLI_ARM64="$ROOT/target/aarch64-apple-darwin/release/geniuz"
+DASHBOARD_DIR="$DESKTOP/dashboard"
+DASHBOARD_APP="$DASHBOARD_DIR/target/release/bundle/macos/Geniuz.app"
 ARCHIVE="$DESKTOP/build/Geniuz.xcarchive"
 EXPORT_DIR="$DESKTOP/build/export"
 APP="$EXPORT_DIR/Geniuz.app"
@@ -24,11 +26,19 @@ IDENTITY="Developer ID Application: Managed Ventures LLC (NT5SU826F4)"
 TEAM_ID="NT5SU826F4"
 NOTARY_PROFILE="AC_PASSWORD"
 
-echo "==> Step 1/8: Build arm64 Rust CLI"
+echo "==> Step 1/10: Build arm64 Rust CLI"
 cd "$ROOT"
 cargo build --release --target aarch64-apple-darwin
 
-echo "==> Step 2/8: xcodebuild archive (Release, universal Swift)"
+echo "==> Step 2/10: Build Tauri dashboard (Geniuz.app via cargo tauri build)"
+cd "$DASHBOARD_DIR"
+cargo tauri build
+test -d "$DASHBOARD_APP" || {
+    echo "FATAL: Tauri Geniuz.app not found at $DASHBOARD_APP"
+    exit 1
+}
+
+echo "==> Step 3/10: xcodebuild archive (Release, universal Swift)"
 cd "$DESKTOP"
 rm -rf "$ARCHIVE" "$EXPORT_DIR"
 xcodebuild archive \
@@ -40,31 +50,46 @@ xcodebuild archive \
     SKIP_INSTALL=NO \
     | tail -5
 
-echo "==> Step 3/8: Inject Rust CLI into archived .app's Resources/"
-cp "$CLI_ARM64" "$ARCHIVE/Products/Applications/Geniuz.app/Contents/Resources/geniuz"
-chmod +x "$ARCHIVE/Products/Applications/Geniuz.app/Contents/Resources/geniuz"
+ARCHIVED_APP="$ARCHIVE/Products/Applications/Geniuz.app"
 
-echo "==> Step 4/8: Re-sign the .app (CLI injection invalidated outer signature)"
+echo "==> Step 4/10: Inject Rust CLI into archived .app's Resources/"
+cp "$CLI_ARM64" "$ARCHIVED_APP/Contents/Resources/geniuz"
+chmod +x "$ARCHIVED_APP/Contents/Resources/geniuz"
+
+echo "==> Step 5/10: Nest Tauri dashboard inside menubar .app's Resources/"
+rm -rf "$ARCHIVED_APP/Contents/Resources/Geniuz.app"
+cp -R "$DASHBOARD_APP" "$ARCHIVED_APP/Contents/Resources/Geniuz.app"
+
+echo "==> Step 6/10: Sign nested Tauri dashboard (inside-out signing)"
+# Sign the dashboard binary first, then the nested .app
 codesign --force --options runtime --timestamp \
     --sign "$IDENTITY" \
-    "$ARCHIVE/Products/Applications/Geniuz.app/Contents/Resources/geniuz"
+    "$ARCHIVED_APP/Contents/Resources/Geniuz.app/Contents/MacOS/geniuz-dashboard"
+codesign --force --options runtime --timestamp \
+    --sign "$IDENTITY" \
+    "$ARCHIVED_APP/Contents/Resources/Geniuz.app"
+
+echo "==> Step 7/10: Re-sign the outer .app (CLI + dashboard injection invalidated outer signature)"
+codesign --force --options runtime --timestamp \
+    --sign "$IDENTITY" \
+    "$ARCHIVED_APP/Contents/Resources/geniuz"
 codesign --force --options runtime --timestamp \
     --sign "$IDENTITY" \
     --entitlements "$DESKTOP/Geniuz/Geniuz.entitlements" \
-    "$ARCHIVE/Products/Applications/Geniuz.app"
+    "$ARCHIVED_APP"
 
-echo "==> Step 5/8: Export signed .app to export dir"
+echo "==> Step 8/10: Export signed .app to export dir"
 mkdir -p "$EXPORT_DIR"
 cp -R "$ARCHIVE/Products/Applications/Geniuz.app" "$APP"
 
-echo "==> Step 6/8: Notarize .app (submit → wait → staple)"
+echo "==> Step 9/10: Notarize .app (submit → wait → staple)"
 APP_ZIP="$DESKTOP/build/Geniuz.app.zip"
 rm -f "$APP_ZIP"
 ditto -c -k --keepParent "$APP" "$APP_ZIP"
 xcrun notarytool submit "$APP_ZIP" --keychain-profile "$NOTARY_PROFILE" --wait
 xcrun stapler staple "$APP"
 
-echo "==> Step 7/8: Build DMG with custom layout (background + volume icon + icon positions)"
+echo "==> Step 10/10: Build DMG (custom layout) + sign + notarize + staple"
 rm -rf "$DMG_STAGING" "$DMG" "$DMG_RW"
 mkdir -p "$DMG_STAGING"
 cp -R "$APP" "$DMG_STAGING/"
@@ -128,7 +153,7 @@ hdiutil detach "$MOUNT_POINT"
 hdiutil convert "$DMG_RW" -format UDZO -imagekey zlib-level=9 -o "$DMG"
 rm -f "$DMG_RW"
 
-echo "==> Step 8/8: Sign + notarize DMG"
+echo "==> Sign + notarize DMG"
 codesign --force --timestamp --sign "$IDENTITY" "$DMG"
 xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait
 xcrun stapler staple "$DMG"
