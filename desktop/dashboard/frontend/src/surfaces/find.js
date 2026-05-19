@@ -53,9 +53,10 @@ export async function mount(container) {
   body.className = 'main-body';
   root.appendChild(body);
 
-  // ---- Input + mode toggle -------------------------------------------
-  const inputWrap = document.createElement('div');
+  // ---- Input + submit + mode toggle ----------------------------------
+  const inputWrap = document.createElement('form');
   inputWrap.className = 'find-input-wrap';
+  inputWrap.setAttribute('role', 'search');
   const input = document.createElement('input');
   input.type = 'text';
   input.className = 'find-input';
@@ -64,6 +65,11 @@ export async function mount(container) {
   input.autocomplete = 'off';
   input.spellcheck = false;
   inputWrap.appendChild(input);
+  const submitBtn = document.createElement('button');
+  submitBtn.type = 'submit';
+  submitBtn.className = 'find-submit';
+  submitBtn.textContent = 'Search';
+  inputWrap.appendChild(submitBtn);
   body.appendChild(inputWrap);
 
   const toggle = document.createElement('div');
@@ -96,17 +102,16 @@ export async function mount(container) {
   body.appendChild(resultsEl);
 
   // ---- Input wiring ---------------------------------------------------
+  // No per-keystroke search — at large db sizes that pays the embed/SQL cost
+  // for every character. Submit on Enter or click; track the query in state
+  // so navigating away and back restores it.
   input.addEventListener('input', (e) => {
     query = e.target.value;
     setState({ searchQuery: query });
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => runSearch(query), DEBOUNCE_MS);
   });
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      runSearch(input.value, /* immediate */ true);
-    }
+  inputWrap.addEventListener('submit', (e) => {
+    e.preventDefault();
+    runSearch(input.value, /* immediate */ true);
   });
 
   // ---- Paint ----------------------------------------------------------
@@ -191,9 +196,10 @@ export async function mount(container) {
       const row = document.createElement('button');
       row.type = 'button';
       row.className = 'memory-row';
+      // Category lives inline in the gist (formatGist bolds the prefix).
+      // No separate chip — one visual anchor per row, matching Recent and TUI.
       row.innerHTML = `
-        <span class="memory-row__gist">${escapeHtml(m.gist || '(no gist)')}</span>
-        ${m.category ? `<span class="memory-row__chip">${escapeHtml(m.category)}</span>` : '<span></span>'}
+        <span class="memory-row__gist">${formatGist(m.gist || '(no gist)')}</span>
         <span class="memory-row__time">${fmt.ago(m.created_at)}</span>
       `;
       row.addEventListener('click', () => navigate('detail', { selectedMemoryUuid: m.uuid }));
@@ -204,6 +210,21 @@ export async function mount(container) {
 }
 
 // ---- helpers ---------------------------------------------------------------
+
+function formatGist(gist) {
+  // Find the earliest separator: |, ;, or :. Matches recent.js and the TUI.
+  const positions = ['|', ';', ':']
+    .map((c) => gist.indexOf(c))
+    .filter((i) => i > 0 && i < 40);
+  if (positions.length === 0) return escapeHtml(gist);
+  const sepIdx = Math.min(...positions);
+  const prefix = gist.slice(0, sepIdx);
+  const wordCount = prefix.trim().split(/\s+/).length;
+  if (wordCount > 3 || prefix.trim().length === 0) {
+    return escapeHtml(gist);
+  }
+  return `<strong class="memory-row__gist-tag">${escapeHtml(prefix)}</strong>${escapeHtml(gist.slice(sepIdx))}`;
+}
 
 function escapeHtml(s) {
   return String(s ?? '')
