@@ -31,6 +31,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var globalEventMonitor: Any?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Menubar-only: no dock icon. The dashboard is launched as a
+        // separate process by menu action — it appears in the dock while
+        // open, leaving the menubar item as the always-on Geniuz presence.
+        NSApp.setActivationPolicy(.accessory)
+
         service = GeniuzService()
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
