@@ -76,8 +76,14 @@
   --ease:    cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Dark-mode tokens. Scoped with :not(.os-linux) because webkit2gtk inherits
+   the GTK dark theme as prefers-color-scheme: dark, which would override our
+   .os-linux solid-light surfaces and produce white text on light backgrounds.
+   See tauri-apps/tauri#9255, #9427. The .os-linux block paints explicit light
+   surfaces; this guard prevents the media query from rewriting ink tokens to
+   white when GTK is in dark mode. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.os-linux) {
     --bg-surface:   rgba(255, 255, 255, 0.04);
     --bg-elevated:  rgba(255, 255, 255, 0.08);
     --bg-active:    rgba(255, 255, 255, 0.14);
