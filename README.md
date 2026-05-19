@@ -4,42 +4,139 @@
 
 You brief your agent. It does great work. The session ends. Next session — it asks the same questions again. Every insight, every preference, every decision — gone.
 
-Geniuz fixes that. One binary, local, private, searchable by meaning.
+Geniuz fixes that. One install, local, private, searchable by meaning. Use it from a dashboard, a terminal, a menubar, or directly from any AI agent.
 
-## Two ways to use it
+<!-- HERO_SCREENSHOT_HERE: dashboard window + macOS menubar popover side-by-side, showing recent memories and stats. ~1600px wide. -->
 
-### Claude Desktop
+> **New in 2.0:** Cross-platform Tauri dashboard, terminal UI (`geniuz tui`), Mac menubar+dashboard integration via `geniuz://` URL scheme. [See release notes →](https://github.com/jackccrawford/geniuz/releases/tag/v2.0.0)
 
-If you use Claude Desktop, this is the fastest path. Two commands:
+## Three surfaces, one memory
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/jackccrawford/geniuz/main/install.sh | bash
-geniuz mcp install
+Geniuz is one Rust core with several ways to reach it. Pick what fits the moment.
+
+### Dashboard
+
+Browse memories, save new ones, search by meaning, see recent threads. Native vibrancy on macOS, system tray on Windows + Linux.
+
+<!-- SCREENSHOT_HERE: Dashboard "Memories" surface showing the list with category chips and dates. -->
+
+Surfaces: **Memories · Remember · Find · Detail · Status · Data & Export · Settings**.
+
+### Terminal UI — `geniuz tui`
+
+Same data, terminal-native. For developers and agents who live in a shell. Two-field compose for `/remember`, semantic search via `/find`, sort toggle via `/reorder`.
+
+<!-- SCREENSHOT_HERE: TUI in a dark terminal showing recent memories with bold category prefixes. -->
+
+```
+$ geniuz tui
 ```
 
-Restart Claude Desktop. Your Claude now has three tools — **remember**, **recall**, and **recent**. It saves what it learns during conversations and finds it again by meaning in future sessions. You don't have to do anything differently.
+Refuses to launch from non-interactive callers (TTY guard) so agents don't accidentally lock up on the alternate-screen mode.
 
-**Monday** — you tell Claude about a new client. David, 12-person landscaping company, $500/month budget, loses 2-3 jobs a week from slow follow-ups.
+### Menubar (macOS) / System tray (Windows + Linux)
 
-**Thursday** — new session. You say "draft a follow-up for the landscaping lead." Claude already knows David's name, budget, team size, and pain point. No re-briefing.
+Ambient presence. Memory count, recent activity, one-click to the dashboard. The menubar app is dock-less on Mac (`LSUIElement`) — it's a residence, not a window.
 
-*How did it know that?* That's Geniuz.
+<!-- SCREENSHOT_HERE: macOS menubar popover with stats hero (Memories · Today · Threads), Recent list, Claude Desktop status, Open Dashboard button. -->
 
-[See the full Geniuz experience](https://geniuz.life)
+### CLI for agents
 
-### CLI for developers and agents
-
-If you build with Claude Code, Cursor, Windsurf, Aider, or any framework — Geniuz is a shell command your agent calls directly:
+Underneath everything, the `geniuz` command. Your agents call it from any shell, any framework.
 
 ```bash
-# Save something
 geniuz remember -c "OAuth token refresh is async but middleware assumed sync. Swapped lines 42-47." -g "fix: auth token refresh — async ordering"
-
-# Find it later — by meaning, not keywords
 geniuz recall "authentication middleware"
 ```
 
 Searched "authentication middleware," found a memory about "OAuth refresh" and "middleware ordering." The meaning matched. No re-investigation. No human re-explaining.
+
+---
+
+## Why local
+
+- **Private.** Your data never leaves your machine. No cloud. No account. No telemetry.
+- **Fast.** No network calls. Semantic search runs locally in the binary.
+- **Free.** No API keys. No token costs for memory. No subscription.
+- **Portable.** Your folder is a SQLite file. Copy it, back it up, share it.
+- **Framework-independent.** Switch from Cursor to Claude Code — your memory comes with you.
+
+---
+
+## Install
+
+Pick the path that matches your setup.
+
+### macOS — one click
+
+Download **[Geniuz.dmg](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz.dmg)**, double-click, drag to Applications. Signed and notarized by Managed Ventures LLC — no Gatekeeper warnings.
+
+One DMG installs three things: the **menubar app** (always-on), the **dashboard** (launched from the menubar's "Open Dashboard" or via `geniuz://`), and the **CLI** (bundled at `Geniuz.app/Contents/Resources/geniuz`).
+
+Wire the CLI into your shell PATH if you want it on the command line:
+
+```bash
+sudo ln -sf /Applications/Geniuz.app/Contents/Resources/geniuz /usr/local/bin/geniuz
+```
+
+Or skip the DMG entirely and use the CLI-first install below — that path installs to `~/.geniuz/bin/` and adds itself to your PATH without sudo. Apple Silicon native; Intel Macs run via Rosetta 2 (universal binary coming).
+
+### Windows — one click
+
+Download **[Geniuz_2.0.0_x64-setup.exe](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz_2.0.0_x64-setup.exe)** (NSIS) or **[Geniuz_2.0.0_x64_en-US.msi](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz_2.0.0_x64_en-US.msi)** (MSI). Both are signed via Azure Trusted Signing — Microsoft-rooted cert, no "unknown publisher" warning.
+
+<!-- SCREENSHOT_HERE: Windows system tray with Geniuz icon + the right-click menu showing Open Dashboard / Memories / Find / Status / Settings / Quit. -->
+
+After install, the dashboard runs as a system tray app. Left-click → window; right-click → menu.
+
+*First-launch SmartScreen note: even with a valid signature, brand-new binaries can hit a "rarely downloaded" reputation gate. If you see "Windows protected your PC," click "More info" → "Run anyway." That's per-binary reputation, separate from cert trust.*
+
+### Mac / Linux — one command (developer path)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jackccrawford/geniuz/main/install.sh | bash
+```
+
+Detects your OS and architecture, downloads the matching CLI binary (with TUI built in), installs to `~/.geniuz/bin/`. No DMG, no dashboard — just the CLI + TUI. Best for developers, fleet operators, and anyone using Claude Code, Cursor, Windsurf, Aider, or any agent framework that can run a shell command.
+
+### Linux platform notes
+
+Supported architectures:
+
+- **x86_64** (Ubuntu, Debian, Fedora, Arch — modern distros with glibc 2.34+)
+- **arm64** (Raspberry Pi 5, Pi OS / Debian Bookworm+, NVIDIA Jetson, Ampere, AWS Graviton, Oracle Ampere)
+
+The arm64 build bundles ONNX Runtime 1.22 as a sibling `.so` and wraps the CLI with an `LD_LIBRARY_PATH` script, so it runs cleanly on older-glibc systems like Pi OS Bookworm (glibc 2.36). The x86_64 build is a single static binary.
+
+Claude Desktop isn't available on Linux, but `geniuz mcp serve` works as a stdio MCP server for any Linux-compatible MCP client (Claude Code, Cursor, Windsurf, Aider, custom agents). The dashboard ships as a `.deb` and `.AppImage` for desktop Linux; the TUI runs in any terminal.
+
+### From source
+
+```bash
+git clone https://github.com/jackccrawford/geniuz && cd geniuz
+cargo build --release --bin geniuz
+cp target/release/geniuz ~/.local/bin/
+```
+
+To also build the dashboard locally:
+
+```bash
+cd desktop/dashboard
+cargo tauri build
+```
+
+(Requires `tauri-cli`. Mac: nothing else. Linux: `libwebkit2gtk-4.1-dev build-essential libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev`. Windows: WebView2 runtime — typically preinstalled on Win 10/11.)
+
+### Then choose your path
+
+| You use... | Next step |
+|------------|-----------|
+| Claude Desktop | `geniuz mcp install` → restart Claude Desktop |
+| Claude Code / Cursor / Windsurf | Add two lines to your agent's instructions (see below) |
+| Custom agents | Call `geniuz remember` and `geniuz recall` from any shell |
+| Just want to see your memories | `geniuz tui` in any terminal, or open the dashboard from the menubar/tray |
+
+---
 
 ## How it works
 
@@ -51,124 +148,39 @@ Geniuz is a compiled Rust binary backed by SQLite. No cloud. No API key. No acco
 - **Shared folders** let multiple agents write to the same memory. What one learns, all find
 
 ```
-Agent → geniuz (Rust binary) → SQLite
+   Dashboard ─┐
+        TUI  ─┼─→ db::DatabaseManager ──→ memory.db (SQLite)
+   Menubar  ─┤                                ↑
+        CLI ─┘                                │
+                                              ↓
+                                       ONNX (BERT)
 ```
 
 The model downloads once (~118MB) on first search. Every memory after that is embedded automatically. No setup. No configuration.
 
-## Install
-
-Pick the path that matches your setup.
-
-### Mac — one click (consumer path)
-
-Download **[Geniuz.dmg](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz.dmg)**, double-click, drag to Applications. Signed and notarized by Managed Ventures LLC — no Gatekeeper warnings. Independent verification: [scanned clean by VirusTotal](https://www.virustotal.com/gui/file/ef62bd3e4a164ddf1284190589f97801a9dccc6619b15ec5a677b275de7663fa/detection) (0/60 engines).
-
-Installs the menu bar app to `/Applications/Geniuz.app`. Launch it once; use the "Configure Claude Connection" button to wire up Claude Desktop. Requires macOS Sonoma (14) or later. Apple Silicon native; Intel Macs run via Rosetta 2 (universal binary coming in a near-term release).
-
-**If you want the CLI too** (for scripting, or for agents that aren't Claude Desktop), it's bundled inside the app. Add it to your PATH:
-
-```bash
-sudo ln -sf /Applications/Geniuz.app/Contents/Resources/geniuz /usr/local/bin/geniuz
-```
-
-Or skip the DMG entirely and use the CLI-first install below — that path installs to `~/.geniuz/bin/` and adds itself to your PATH without sudo.
-
-### Mac / Linux — one command (developer path)
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/jackccrawford/geniuz/main/install.sh | bash
-```
-
-Detects your OS and architecture, downloads the matching binary, installs to `~/.geniuz/bin/`. No DMG, no menu bar app — just the CLI. Best for developers, fleet operators, and anyone using Claude Code, Cursor, Windsurf, Aider, or any agent framework that can run a shell command.
-
-Mac users: this is the path to take if you plan to use `geniuz` from Terminal, or if you want a CLI install on top of (or instead of) the DMG.
-
-### Windows — one click
-
-Download **[Geniuz-Setup.exe](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz-Setup.exe)**, double-click, follow the wizard. Per-user install, no admin needed. Signed with an EV code signing certificate by Managed Ventures LLC.
-
-*If Windows shows a "Windows protected your PC" popup, that's SmartScreen reputation building for a brand-new publisher — not a security issue. Click "More info" → "Run anyway". Independent verification: [scanned clean by VirusTotal](https://www.virustotal.com/gui/file/4b6f7febd6293ba857564a951a4e3a2e6210edbfc44344085248ef2998f517e0/detection) (0/71 engines).*
-
-Installs CLI to `%LOCALAPPDATA%\Programs\Geniuz\`, adds to PATH, wires Claude Desktop (both the `.exe` and Microsoft Store variants). Requires Windows 10 or 11. Pick your memory location in the wizard — default is `%USERPROFILE%\.geniuz\`.
-
-### Linux platform notes
-
-The `install.sh` path above works on Linux too. Supported architectures:
-
-- **x86_64** (Ubuntu, Debian, Fedora, Arch — modern distros with glibc 2.34+)
-- **arm64** (Raspberry Pi 5, Pi OS / Debian Bookworm+, NVIDIA Jetson, Ampere, AWS Graviton, Oracle Ampere)
-
-The arm64 build bundles ONNX Runtime 1.22 as a sibling `.so` and wraps the CLI with an `LD_LIBRARY_PATH` script, so it runs cleanly on older-glibc systems like Pi OS Bookworm (glibc 2.36). The x86_64 build is a single static binary.
-
-Claude Desktop isn't available on Linux, but `geniuz mcp serve` works as a stdio MCP server for any Linux-compatible MCP client (Claude Code, Cursor, Windsurf, Aider, custom agents). Run `geniuz mcp install` if you want — it silently writes the config, harmless either way.
-
-### From source
-
-```bash
-git clone https://github.com/jackccrawford/geniuz && cd geniuz
-cargo build --release
-cp target/release/geniuz ~/.local/bin/
-```
-
-### Then choose your path
-
-| You use... | Next step |
-|------------|-----------|
-| Claude Desktop | `geniuz mcp install` → restart Claude Desktop |
-| Claude Code / Cursor / Windsurf | Add two lines to your agent's instructions (see below) |
-| Custom agents | Call `geniuz remember` and `geniuz recall` from any shell |
-
-## Repo layout
-
-This repo contains the full Geniuz source — CLI, Mac app, Windows installer — all under one roof.
-
-| Path | What's there |
-|------|--------------|
-| `src/` | Rust CLI + embedding + MCP server source |
-| `schema/` | SQLite schema for the memory database |
-| `skills/` | `SKILL.md` — the embedded skill guide `geniuz skill` prints |
-| `install.sh` | Linux/Mac CLI installer (the `curl \| bash` target) |
-| `desktop/` | Mac SwiftUI menu bar app — Xcode project that produces `Geniuz.app` and the DMG |
-| `installer/windows/` | Inno Setup script + branded assets that produce `Geniuz-Setup.exe` |
-| `images/` | Brand assets — logo, icons, social preview |
-| `Cargo.toml` | Rust crate manifest — pinned dependencies, version |
-| `.cargo/config.toml` | Cross-compile linker config for Linux x86_64 target |
-
-Built artifacts are attached to each [GitHub release](https://github.com/jackccrawford/geniuz/releases):
-
-- `Geniuz.dmg` — Mac (arm64, Sonoma 14+)
-- `Geniuz-Setup.exe` — Windows (x86_64, Win 10/11)
-- `geniuz-linux-amd64.tar.gz` — Linux (x86_64)
-- `geniuz-linux-arm64.tar.gz` — Linux (arm64, Raspberry Pi 5 compatible)
-
-## Architecture
-
-Geniuz Free exposes three public interfaces:
-
-- **MCP** — for AI agents (Claude Desktop, sub-agents) and for procedural software that wants Geniuz access. Scripts, webhooks, and pipelines should spawn their own `geniuz mcp serve` subprocess and speak MCP over stdio.
-- **CLI** — for developers and power users. Every subcommand supports `--json` output for procedural callers that prefer scripting over MCP.
-- **Menu bar** (Mac) — for humans. Ambient status; no interaction surface.
-
-A full **GUI app** is on the roadmap for humans who want to search, browse, and import without the CLI.
-
-**The SQLite file (`memory.db`) is not a public interface.** Schema may change without notice. Invariants — memory immutability (enforced by triggers), every-memory-has-an-embedding (enforced by the library's write transaction) — hold at the interface boundary, not at the file boundary. If you want programmatic access, go through MCP.
-
-There is no HTTP server in Geniuz Free. Procedural software speaks MCP. This keeps the storage layer free to evolve and the invariants centralized in one place.
+---
 
 ## Works with everything
 
 | Platform | How |
 |----------|-----|
 | **Claude Desktop** | `geniuz mcp install` — automatic remember/recall/recent tools |
-| **Claude Code** | Remember from hooks or inline via Bash |
+| **Claude Code** | Remember from hooks or inline via Bash; or use the TUI for browsing |
 | **Cursor / Windsurf / Aider** | Any agent that can run a shell command |
 | **OpenClaw** | `geniuz capture --openclaw` imports your existing memory |
 | **Custom agents** | If your agent can exec, it can remember |
+| **Just you** | Dashboard for browse/search/compose; TUI for the same in a terminal |
+
+---
 
 ## What it looks like
 
-**Save what you learned:**
+<!-- SCREENSHOT_GALLERY: a 2x2 grid would be ideal here. Suggested:
+     [Dashboard Memories]  [Dashboard Remember compose]
+     [TUI recent list]     [TUI detail view]
+-->
+
+**Save what you learned (CLI):**
 
 ```
 $ geniuz remember -c "Maria prefers retention over acquisition in Q2. Budget is $40K." -g "client: Maria — Q2 retention focus, $40K budget"
@@ -182,13 +194,13 @@ $ geniuz recall "Maria's budget priorities"
 7A3B29F1 | 2026-03-05 14:23 | client: Maria — Q2 retention focus, $40K budget (0.52)
 ```
 
-**Get the full content:**
+**Browse interactively:**
 
 ```
-$ geniuz recall --full "Maria"
-7A3B29F1 | 2026-03-05 14:23 | client: Maria — Q2 retention focus, $40K budget
-           Maria prefers retention over acquisition in Q2. Budget is $40K.
+$ geniuz tui
 ```
+
+Opens a terminal UI with `/recent`, `/remember`, `/find`, `/reorder`, `/random`, `/detail`, `/help`. Press `/` to start typing a command; `↑`/`↓` to navigate; `Enter` to open detail; `Ctrl-C` to exit.
 
 **Thread a follow-up:**
 
@@ -199,23 +211,7 @@ $ geniuz remember -c "Maria approved the retention plan. Starting in April." -g 
 
 The full client history — from first meeting to approval — is one chain. Any future session finds the whole story.
 
-**See what's recent:**
-
-```
-$ geniuz recent
-E5F6A7B8 | 2026-03-08 09:15 | client: Maria — plan approved <- 7A3B29F1
-7A3B29F1 | 2026-03-05 14:23 | client: Maria — Q2 retention focus, $40K budget
-```
-
-**Check your folder:**
-
-```
-$ geniuz status
-Folder: ~/.geniuz/memory.db
-Memories: 847
-```
-
-Every memory is embedded at write time — there is no "partially indexed" state.
+---
 
 ## Capture existing knowledge
 
@@ -230,6 +226,8 @@ geniuz backfill                               # embed everything for semantic se
 ```
 
 Three commands — `capture`, `backfill`, `recall` — turn any folder of markdown into a searchable memory folder. Local RAG with zero infrastructure.
+
+---
 
 ## Commands
 
@@ -250,6 +248,9 @@ geniuz recent                                 # latest memories
 geniuz recent -l 5                            # last 5
 geniuz recent --full                          # with content
 
+# Interactive
+geniuz tui                                    # terminal UI (requires a TTY)
+
 # Capture and index
 geniuz capture ./docs/                        # bulk-load files
 geniuz backfill                               # build embedding cache
@@ -265,6 +266,8 @@ geniuz mcp status                             # check if configured
 geniuz mcp serve                              # run MCP server (used internally)
 ```
 
+---
+
 ## Integration
 
 Add two lines to your agent's instructions:
@@ -277,13 +280,55 @@ When you need to remember something:
   geniuz recall "what you're looking for"
 ```
 
-## Why local
+---
 
-- **Private.** Your data never leaves your machine. No cloud. No account.
-- **Fast.** No network calls. Semantic search runs locally in the binary.
-- **Free.** No API keys. No token costs for memory. No subscription.
-- **Portable.** Your folder is a SQLite file. Copy it, back it up, share it.
-- **Framework-independent.** Switch from Cursor to Claude Code — your memory comes with you.
+## Architecture
+
+Geniuz Free exposes four user surfaces plus the MCP server for agents:
+
+- **Dashboard** (Tauri) — for browse, search, compose, settings. Cross-platform.
+- **TUI** (`geniuz tui`) — same for terminal users and agents that prefer ratatui over GUI.
+- **Menubar / system tray** — always-on ambient presence. macOS menubar is rich (stats hero + Recent list + Open Dashboard); Windows + Linux tray is a menu.
+- **CLI** — for scripting and direct agent integration. Every subcommand supports `--json` for procedural callers.
+- **MCP** — `geniuz mcp serve` is the stdio MCP server. Used by Claude Desktop, Claude Code, and any MCP client.
+
+All surfaces go through one library: `db::DatabaseManager`. Same write path, same read path, same invariants. The dashboard's "Remember" button and the CLI's `geniuz remember` end up at the same SQL `INSERT`.
+
+**The SQLite file (`memory.db`) is not a public interface.** Schema may change without notice. Invariants — memory immutability (enforced by triggers), every-memory-has-an-embedding (enforced by the library's write transaction) — hold at the interface boundary, not at the file boundary. If you want programmatic access, go through MCP or the CLI.
+
+There is no HTTP server in Geniuz Free. Procedural software speaks MCP. This keeps the storage layer free to evolve and the invariants centralized in one place.
+
+---
+
+## Repo layout
+
+This repo contains the full Geniuz source — CLI, TUI, dashboard, Mac menubar app, Windows installer — all under one roof.
+
+| Path | What's there |
+|------|--------------|
+| `src/` | Rust CLI + TUI + embedding + MCP server source |
+| `src/tui.rs` | Terminal UI (ratatui + crossterm) |
+| `schema/` | SQLite schema for the memory database |
+| `skills/` | `SKILL.md` — the embedded skill guide `geniuz skill` prints |
+| `install.sh` | Linux/Mac CLI installer (the `curl \| bash` target) |
+| `desktop/Geniuz/` | macOS menubar app (SwiftUI) — Xcode project |
+| `desktop/dashboard/` | Tauri cross-platform dashboard — Rust + HTML/CSS/JS |
+| `desktop/ship.sh` | Mac release pipeline (build → inject CLI + dashboard → sign → notarize → DMG) |
+| `installer/windows/` | Inno Setup script + Trusted Signing scripts |
+| `images/` | Brand assets — logo, icons, social preview |
+| `Cargo.toml` | Rust crate manifest — pinned dependencies, version |
+
+Built artifacts are attached to each [GitHub release](https://github.com/jackccrawford/geniuz/releases):
+
+- `Geniuz.dmg` — Mac (arm64, Sonoma 14+) — menubar + dashboard + CLI
+- `Geniuz_2.0.0_x64-setup.exe` — Windows NSIS (x86_64, Win 10/11) — dashboard with system tray
+- `Geniuz_2.0.0_x64_en-US.msi` — Windows MSI (alternative for enterprise deploy)
+- `geniuz-linux-amd64.tar.gz` — Linux x86_64 CLI + TUI
+- `geniuz-linux-arm64.tar.gz` — Linux arm64 CLI + TUI (Pi 5 compatible)
+- `geniuz_2.0.0_amd64.deb` — Linux x86_64 dashboard (Debian/Ubuntu)
+- `geniuz_2.0.0_arm64.deb` — Linux arm64 dashboard (Pi 5)
+
+---
 
 ## For agents
 
@@ -307,16 +352,11 @@ Memories compound. A single memory is a note. A folder of memories is institutio
 - **When stuck.** The answer might be in a memory from three sessions ago.
 - **After compaction.** Your context was compressed. Your folder wasn't.
 
-## Menu bar app
+### When to use the TUI
 
-The Geniuz menu bar app (macOS) shows:
-- Memory count and recent memories (collapsible list)
-- Claude Desktop connection status
-- One-click configure for Claude Desktop when it's not yet wired up
+`geniuz tui` only launches with an interactive terminal. Agents calling from a subprocess get a clean refusal with exit code 2. If you want browsing in code, use `geniuz recent`, `geniuz recall`, or the MCP tools — they're shell-friendly.
 
-The menu bar is a witness, not an interaction surface. To add memories, use Claude Desktop or the CLI. A full interaction app (search, browse, import) is on the roadmap.
-
-Available as a [DMG download](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz.dmg), signed and notarized by Managed Ventures LLC.
+---
 
 ## Performance: geniuz-embed
 
@@ -334,16 +374,23 @@ geniuz remember -c "second"    # 0.04s (model warm)
 | With embed server | 109ms | **40ms** |
 | Speedup | 6.5x | **39.5x** |
 
+---
+
 ## Privacy
 
 Your data stays on your computer. Geniuz stores memories in a local SQLite database. The semantic search model runs locally via ONNX Runtime. No data is sent anywhere. The source code is open — read every line.
 
+---
+
 ## Built with
 
-- [Rust](https://www.rust-lang.org/) — CLI and MCP server
+- [Rust](https://www.rust-lang.org/) — CLI, TUI, MCP server, dashboard backend
+- [ratatui](https://ratatui.rs/) + [crossterm](https://github.com/crossterm-rs/crossterm) — terminal UI
+- [Tauri 2](https://tauri.app/) — cross-platform dashboard (window-vibrancy on macOS, system tray on Windows + Linux)
 - [ONNX Runtime](https://onnxruntime.ai/) — local semantic search
-- [SwiftUI](https://developer.apple.com/swiftui/) — menu bar app
+- [SwiftUI](https://developer.apple.com/swiftui/) — macOS menubar app
 - [MCP](https://modelcontextprotocol.io) — Claude Desktop integration
+- [Azure Trusted Signing](https://learn.microsoft.com/en-us/azure/trusted-signing/) — Windows code signing
 
 ## License
 

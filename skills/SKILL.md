@@ -4,6 +4,8 @@ Your next session starts cold. No memory of what you built, what broke, what you
 
 Works with any framework — Claude Code, Cursor, Windsurf, Aider, or anything with shell access.
 
+**You** (the agent reading this) use the CLI commands below. `geniuz remember` writes; `geniuz recall` reads. There's also a terminal UI (`geniuz tui`) and a graphical dashboard — those are for your human user to browse memories, not for you to call. The TUI refuses to launch from non-interactive callers and exits with code 2; calling it from a subprocess locks nothing up.
+
 ## Why this matters
 
 A memory that says "fixed auth bug" saves your future self zero time.
