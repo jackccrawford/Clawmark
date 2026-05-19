@@ -440,16 +440,77 @@ pub fn run() {
                 }
             }
 
-            // Tray icon intentionally disabled. The Geniuz menubar app (SwiftUI,
-            // in desktop/Geniuz/) owns the macOS menubar surface; running a Tauri
-            // tray here would double the menubar item. Launch flow: the menubar
-            // app's "Open Dashboard" command spawns this binary as a subprocess.
-            //
-            // When the Mac native SwiftUI dashboard lands in 2.1, both the
-            // menubar and the dashboard window will live in a single Swift
-            // process — and this Tauri binary retires from the Mac surface
-            // entirely (still ships on Windows + Linux).
-            let _ = handle; // silence unused warning when tray is disabled
+            // System tray. Disabled on macOS because the SwiftUI menubar app
+            // (desktop/Geniuz/) owns the menubar surface; running a Tauri
+            // tray on Mac would double the status item. On Windows + Linux
+            // there is no menubar app, so this Tauri tray IS the always-on
+            // surface — left-click brings the dashboard window forward,
+            // right-click shows the menu.
+            #[cfg(not(target_os = "macos"))]
+            {
+                use tauri::tray::TrayIconBuilder;
+
+                let tray_open = MenuItem::with_id(handle, "tray_open", "Open Dashboard", true, None::<&str>)?;
+                let tray_recent = MenuItem::with_id(handle, "tray_recent", "Memories", true, None::<&str>)?;
+                let tray_find = MenuItem::with_id(handle, "tray_find", "Find…", true, None::<&str>)?;
+                let tray_status = MenuItem::with_id(handle, "tray_status", "Status", true, None::<&str>)?;
+                let tray_settings = MenuItem::with_id(handle, "tray_settings", "Settings…", true, None::<&str>)?;
+                let tray_quit = PredefinedMenuItem::quit(handle, Some("Quit Geniuz"))?;
+
+                let tray_menu = Menu::with_items(
+                    handle,
+                    &[
+                        &tray_open,
+                        &PredefinedMenuItem::separator(handle)?,
+                        &tray_recent,
+                        &tray_find,
+                        &tray_status,
+                        &tray_settings,
+                        &PredefinedMenuItem::separator(handle)?,
+                        &tray_quit,
+                    ],
+                )?;
+
+                let _tray = TrayIconBuilder::new()
+                    .icon(app.default_window_icon().cloned().expect("default window icon"))
+                    .menu(&tray_menu)
+                    .show_menu_on_left_click(false)
+                    .on_menu_event(|app, event| {
+                        let id = event.id().0.as_str();
+                        let Some(window) = app.get_webview_window("main") else { return };
+                        match id {
+                            "tray_open" => {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                            "tray_recent" | "tray_find" | "tray_status" | "tray_settings" => {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                                let _ = window.emit("tray-nav", id);
+                            }
+                            _ => {}
+                        }
+                    })
+                    .on_tray_icon_event(|tray, event| {
+                        use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
+                        if let TrayIconEvent::Click {
+                            button: MouseButton::Left,
+                            button_state: MouseButtonState::Up,
+                            ..
+                        } = event
+                        {
+                            let app = tray.app_handle();
+                            if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                    })
+                    .build(app)?;
+            }
+
+            #[cfg(target_os = "macos")]
+            let _ = handle; // silence unused warning when tray is disabled on Mac
 
             Ok(())
         })
