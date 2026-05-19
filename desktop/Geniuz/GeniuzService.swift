@@ -451,6 +451,28 @@ class GeniuzService: ObservableObject {
         saveSettings(next)
     }
 
+    /// Launch the Geniuz Dashboard via the `geniuz://` URL scheme. The
+    /// dashboard .app registers itself as the handler for this scheme at
+    /// install time (CFBundleURLTypes in its Info.plist). The OS routes the
+    /// open call to the dashboard regardless of where it's installed, and
+    /// sandboxed callers can use this path freely — no entitlements needed.
+    func openDashboard() {
+        guard let url = URL(string: "geniuz://open") else { return }
+        let config = NSWorkspace.OpenConfiguration()
+        config.activates = true
+        NSWorkspace.shared.open(url, configuration: config) { _, error in
+            if let error = error {
+                DispatchQueue.main.async {
+                    let alert = NSAlert()
+                    alert.messageText = "Geniuz Dashboard not installed"
+                    alert.informativeText = "Couldn't open the dashboard. Make sure Geniuz Dashboard is installed (download at geniuz.life). Details: \(error.localizedDescription)"
+                    alert.alertStyle = .warning
+                    alert.runModal()
+                }
+            }
+        }
+    }
+
     /// Open the settings window. Lazy-creates the window on first invocation
     /// and reuses it on subsequent opens. Activates the app so the window
     /// receives focus (LSUIElement = true means we're not normally focusable).

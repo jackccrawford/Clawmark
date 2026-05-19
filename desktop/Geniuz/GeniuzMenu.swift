@@ -25,10 +25,32 @@ struct GeniuzMenu: View {
             }
 
             Divider()
+            openDashboardRow
+
+            Divider()
             quitRow
         }
         .frame(width: 360)
         .background(.regularMaterial)
+    }
+
+    // MARK: - Open Dashboard
+
+    private var openDashboardRow: some View {
+        Button(action: { service.openDashboard() }) {
+            HStack(spacing: 8) {
+                Image(systemName: "rectangle.grid.2x2")
+                    .font(.system(size: 12))
+                Text("Open Dashboard")
+                    .font(.system(size: 12, weight: .medium))
+                Spacer()
+            }
+            .foregroundColor(.primary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Header
