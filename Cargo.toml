@@ -1,6 +1,6 @@
 [package]
 name = "geniuz"
-version = "1.3.1"
+version = "2.0.0"
 edition = "2021"
 description = "Your AI remembers now — persistent memory for AI agents"
 license = "MIT"
@@ -49,6 +49,11 @@ ort = { version = "2.0.0-rc.12", default-features = false, features = ["std", "a
 tokenizers = { version = "0.21", default-features = false, features = ["onig"] }
 ureq = { version = "3", features = ["json"] }
 interprocess = "2"
+
+# TUI: ratatui + crossterm for `geniuz tui`
+ratatui = "0.29"
+crossterm = "0.28"
+anyhow = "1"
 
 # Tray — feature-gated, Windows only ship. Tooltip + right-click menu only,
 # no GUI window, no webview. Keeps binary small (~3MB vs ~7MB with eframe).

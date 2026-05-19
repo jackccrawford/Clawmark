@@ -7,7 +7,7 @@ use clap::{Parser, Subcommand};
     about = "Your AI remembers now",
     long_about = "GENIUZ: Your AI remembers now.\n\nPersistent memory for AI agents. Three R's: remember, recall, recent.\nWorks with any agent framework — Claude Code, Cursor, Windsurf, Aider,\nor anything that can run a shell command.",
     before_help = "Start here: 'geniuz recent' to see what's in your folder.",
-    after_help = "Examples:\n  geniuz remember -c \"Fixed the auth bug\" -g \"fix: token refresh\"\n  geniuz recall \"auth\"                       Semantic search\n  geniuz recent                              Latest memories\n  geniuz capture ./notes/                    Bulk-load markdown files\n  geniuz backfill                            Build embedding cache\n\nFolder: Defaults to .geniuz in your home directory\n  Override with GENIUZ_HOME to change the folder location\n  Override with GENIUZ_STATION for a specific memory.db file\n  Multiple agents can share a folder for shared memory.\n\nUse \"geniuz [command] --help\" for more information."
+    after_help = "Examples:\n  geniuz tui                                 Browse memories in a terminal UI\n  geniuz remember -c \"Fixed the auth bug\" -g \"fix: token refresh\"\n  geniuz recall \"auth\"                       Semantic search\n  geniuz recent                              Latest memories\n  geniuz capture ./notes/                    Bulk-load markdown files\n  geniuz backfill                            Build embedding cache\n\nFolder: Defaults to .geniuz in your home directory\n  Override with GENIUZ_HOME to change the folder location\n  Override with GENIUZ_STATION for a specific memory.db file\n  Multiple agents can share a folder for shared memory.\n\nUse \"geniuz [command] --help\" for more information."
 )]
 pub struct Cli {
     #[command(subcommand)]
@@ -172,6 +172,12 @@ pub enum Command {
 
     /// Show folder stats
     Status,
+
+    /// Launch the terminal UI for browsing your memories
+    #[command(
+        after_help = "An interactive terminal app for navigating your memories.\nRequires an interactive terminal (refuses to launch from scripts/agents)."
+    )]
+    Tui,
 
     /// MCP server for Claude Desktop — run, install, or check status
     #[command(subcommand)]

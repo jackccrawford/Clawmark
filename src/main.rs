@@ -1,6 +1,7 @@
 mod adapter;
 mod cli;
 mod mcp;
+mod tui;
 
 use clap::FromArgMatches;
 use cli::{Cli, Command};
@@ -78,6 +79,11 @@ fn run(cli: Cli) -> Result<String, String> {
     match cli.command {
         Command::Skill => {
             Ok(include_str!("../skills/SKILL.md").to_string())
+        }
+
+        Command::Tui => {
+            tui::run()?;
+            Ok(String::new())
         }
 
         Command::Capture { paths, openclaw, split, gist_prefix, dry_run, force } => {
