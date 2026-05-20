@@ -504,6 +504,7 @@ pub fn run() {
 
                 let _tray = TrayIconBuilder::new()
                     .icon(app.default_window_icon().cloned().expect("default window icon"))
+                    .tooltip("Geniuz")
                     .menu(&tray_menu)
                     .show_menu_on_left_click(false)
                     .on_menu_event(|app, event| {
