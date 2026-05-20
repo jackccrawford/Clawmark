@@ -6,7 +6,7 @@ You brief your agent. It does great work. The session ends. Next session — it 
 
 Geniuz fixes that. One install, local, private, searchable by meaning. Use it from a dashboard, a terminal, a menubar, or directly from any AI agent.
 
-<!-- HERO_SCREENSHOT_HERE: dashboard window + macOS menubar popover side-by-side, showing recent memories and stats. ~1600px wide. -->
+![The Geniuz dashboard — your memory surface, showing 65 memories across 56 threads with two saved today, listed newest-first with category prefixes.](images/dashboard-memories.png)
 
 > **New in 2.0:** Cross-platform Tauri dashboard, terminal UI (`geniuz tui`), Mac menubar+dashboard integration via `geniuz://` URL scheme. [See release notes →](https://github.com/jackccrawford/geniuz/releases/tag/v2.0.0)
 
@@ -17,8 +17,6 @@ Geniuz is one Rust core with several ways to reach it. Pick what fits the moment
 ### Dashboard
 
 Browse memories, save new ones, search by meaning, see recent threads. Native vibrancy on macOS, system tray on Windows + Linux.
-
-<!-- SCREENSHOT_HERE: Dashboard "Memories" surface showing the list with category chips and dates. -->
 
 Surfaces: **Memories · Remember · Find · Detail · Status · Data & Export · Settings**.
 
@@ -38,7 +36,7 @@ Refuses to launch from non-interactive callers (TTY guard) so agents don't accid
 
 Ambient presence. Memory count, recent activity, one-click to the dashboard. The menubar app is dock-less on Mac (`LSUIElement`) — it's a residence, not a window.
 
-<!-- SCREENSHOT_HERE: macOS menubar popover with stats hero (Memories · Today · Threads), Recent list, Claude Desktop status, Open Dashboard button. -->
+![The macOS menubar popover — memory count, today's writes, thread count, most recent gist, Claude Desktop connection status, and a button to open the dashboard.](images/menubar.png)
 
 ### CLI for agents
 
@@ -70,6 +68,8 @@ Pick the path that matches your setup.
 ### macOS — one click
 
 Download **[Geniuz.dmg](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz.dmg)**, double-click, drag to Applications. Signed and notarized by Managed Ventures LLC — no Gatekeeper warnings.
+
+![The Geniuz DMG installer window — drag the Geniuz icon onto the Applications shortcut to install.](images/dmg-installer.png)
 
 One DMG installs three things: the **menubar app** (always-on), the **dashboard** (launched from the menubar's "Open Dashboard" or via `geniuz://`), and the **CLI** (bundled at `Geniuz.app/Contents/Resources/geniuz`).
 
