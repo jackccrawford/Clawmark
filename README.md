@@ -6,7 +6,7 @@ You brief your agent. It does great work. The session ends. Next session — it 
 
 Geniuz fixes that. One install, local, private, searchable by meaning. Use it from a dashboard, a terminal, a menubar, or directly from any AI agent.
 
-<!-- HERO_SCREENSHOT_HERE: dashboard window + macOS menubar popover side-by-side, showing recent memories and stats. ~1600px wide. -->
+![The Geniuz dashboard — your memory surface, showing 65 memories across 56 threads with two saved today, listed newest-first with category prefixes.](images/dashboard-memories.png)
 
 > **New in 2.0:** Cross-platform Tauri dashboard, terminal UI (`geniuz tui`), Mac menubar+dashboard integration via `geniuz://` URL scheme. [See release notes →](https://github.com/jackccrawford/geniuz/releases/tag/v2.0.0)
 
@@ -17,8 +17,6 @@ Geniuz is one Rust core with several ways to reach it. Pick what fits the moment
 ### Dashboard
 
 Browse memories, save new ones, search by meaning, see recent threads. Native vibrancy on macOS, system tray on Windows + Linux.
-
-<!-- SCREENSHOT_HERE: Dashboard "Memories" surface showing the list with category chips and dates. -->
 
 Surfaces: **Memories · Remember · Find · Detail · Status · Data & Export · Settings**.
 
@@ -38,7 +36,7 @@ Refuses to launch from non-interactive callers (TTY guard) so agents don't accid
 
 Ambient presence. Memory count, recent activity, one-click to the dashboard. The menubar app is dock-less on Mac (`LSUIElement`) — it's a residence, not a window.
 
-<!-- SCREENSHOT_HERE: macOS menubar popover with stats hero (Memories · Today · Threads), Recent list, Claude Desktop status, Open Dashboard button. -->
+![The macOS menubar popover — memory count, today's writes, thread count, most recent gist, Claude Desktop connection status, and a button to open the dashboard.](images/menubar.png)
 
 ### CLI for agents
 
@@ -71,6 +69,8 @@ Pick the path that matches your setup.
 
 Download **[Geniuz.dmg](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz.dmg)**, double-click, drag to Applications. Signed and notarized by Managed Ventures LLC — no Gatekeeper warnings.
 
+![The Geniuz DMG installer window — drag the Geniuz icon onto the Applications shortcut to install.](images/dmg-installer.png)
+
 One DMG installs three things: the **menubar app** (always-on), the **dashboard** (launched from the menubar's "Open Dashboard" or via `geniuz://`), and the **CLI** (bundled at `Geniuz.app/Contents/Resources/geniuz`).
 
 Wire the CLI into your shell PATH if you want it on the command line:
@@ -83,7 +83,7 @@ Or skip the DMG entirely and use the CLI-first install below — that path insta
 
 ### Windows — one click
 
-Download **[Geniuz_2.0.0_x64-setup.exe](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz_2.0.0_x64-setup.exe)** (NSIS) or **[Geniuz_2.0.0_x64_en-US.msi](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz_2.0.0_x64_en-US.msi)** (MSI). Both are signed via Azure Trusted Signing — Microsoft-rooted cert, no "unknown publisher" warning.
+Download **[Geniuz-Setup.exe](https://github.com/jackccrawford/geniuz/releases/latest/download/Geniuz-Setup.exe)** (NSIS). Signed via Azure Trusted Signing — Microsoft-rooted cert, no "unknown publisher" warning. Versioned MSI/EXE pairs are attached to each [release](https://github.com/jackccrawford/geniuz/releases) for enterprise deploy.
 
 <!-- SCREENSHOT_HERE: Windows system tray with Geniuz icon + the right-click menu showing Open Dashboard / Memories / Find / Status / Settings / Quit. -->
 
@@ -97,7 +97,9 @@ After install, the dashboard runs as a system tray app. Left-click → window; r
 curl -fsSL https://raw.githubusercontent.com/jackccrawford/geniuz/main/install.sh | bash
 ```
 
-Detects your OS and architecture, downloads the matching CLI binary (with TUI built in), installs to `~/.geniuz/bin/`. No DMG, no dashboard — just the CLI + TUI. Best for developers, fleet operators, and anyone using Claude Code, Cursor, Windsurf, Aider, or any agent framework that can run a shell command.
+Detects your OS and architecture, downloads the matching CLI binary (with TUI built in), installs to `~/.geniuz/bin/`. Best for developers, fleet operators, and anyone using Claude Code, Cursor, Windsurf, Aider, or any agent framework that can run a shell command.
+
+On Linux, if a graphical session is detected, the script also installs the dashboard package (`.deb` / `.rpm` / `.AppImage` — picked from your package manager) with one `sudo` prompt. Headless servers skip the dashboard step automatically. Opt out explicitly with `GENIUZ_NO_DASHBOARD=1`. On macOS, the script installs only the CLI — use the DMG above for the dashboard + menubar.
 
 ### Linux platform notes
 
@@ -321,12 +323,11 @@ This repo contains the full Geniuz source — CLI, TUI, dashboard, Mac menubar a
 Built artifacts are attached to each [GitHub release](https://github.com/jackccrawford/geniuz/releases):
 
 - `Geniuz.dmg` — Mac (arm64, Sonoma 14+) — menubar + dashboard + CLI
-- `Geniuz_2.0.0_x64-setup.exe` — Windows NSIS (x86_64, Win 10/11) — dashboard with system tray
-- `Geniuz_2.0.0_x64_en-US.msi` — Windows MSI (alternative for enterprise deploy)
+- `Geniuz-Setup.exe` — Windows NSIS (x86_64, Win 10/11) — dashboard with system tray. Versioned `Geniuz_<version>_x64-setup.exe` + `.msi` also attached per release.
 - `geniuz-linux-amd64.tar.gz` — Linux x86_64 CLI + TUI
 - `geniuz-linux-arm64.tar.gz` — Linux arm64 CLI + TUI (Pi 5 compatible)
-- `geniuz_2.0.0_amd64.deb` — Linux x86_64 dashboard (Debian/Ubuntu)
-- `geniuz_2.0.0_arm64.deb` — Linux arm64 dashboard (Pi 5)
+- `Geniuz_<version>_amd64.deb` / `Geniuz-<version>-1.x86_64.rpm` / `Geniuz_<version>_amd64.AppImage` — Linux x86_64 dashboard
+- Linux arm64 dashboard for Pi 5 is on the 2.0.5 queue (pending CI extension)
 
 ---
 
