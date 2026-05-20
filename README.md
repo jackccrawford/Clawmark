@@ -53,6 +53,58 @@ geniuz recall "authentication middleware"
 
 Searched "authentication middleware," found a memory about "OAuth refresh" and "middleware ordering." The meaning matched. No re-investigation. No human re-explaining.
 
+The full surface:
+
+```bash
+% geniuz --help
+Start here: 'geniuz recent' to see what's in your folder.
+
+GENIUZ: Your AI remembers now.
+
+Persistent memory for AI agents. Three R's: remember, recall, recent.
+Works with any agent framework — Claude Code, Cursor, Windsurf, Aider,
+or anything that can run a shell command.
+
+Usage: geniuz <COMMAND>
+
+Commands:
+  remember   Save a memory — what you learned, decided, or discovered
+  recall     Search your memories — semantic by default
+  recent     Show recent memories
+  capture    Capture files or directories into your folder
+  watch      Watch for new memories in real time
+  backfill   Build embedding cache for semantic search
+  skill      Show usage guide for agents
+  status     Show folder stats
+  tui        Launch the terminal UI for browsing your memories
+  dashboard  Launch the graphical dashboard app
+  mcp        MCP server for Claude Desktop — run, install, or check status
+  settings   User settings — read or change preferences
+  help       Print this message or the help of the given subcommand(s)
+
+Options:
+  -v, --version
+          Show version information
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+Examples:
+  geniuz tui                                 Browse memories in a terminal UI
+  geniuz remember -c "Fixed the auth bug" -g "fix: token refresh"
+  geniuz recall "auth"                       Semantic search
+  geniuz recent                              Latest memories
+  geniuz capture ./notes/                    Bulk-load markdown files
+  geniuz backfill                            Build embedding cache
+
+Folder: Defaults to .geniuz in your home directory
+  Override with GENIUZ_HOME to change the folder location
+  Override with GENIUZ_STATION for a specific memory.db file
+  Multiple agents can share a folder for shared memory.
+
+Use "geniuz [command] --help" for more information.
+```
+
 ---
 
 ## Why local
