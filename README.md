@@ -24,11 +24,15 @@ Surfaces: **Memories · Remember · Find · Detail · Status · Data & Export ·
 
 Same data, terminal-native. For developers and agents who live in a shell. Two-field compose for `/remember`, semantic search via `/find`, sort toggle via `/reorder`.
 
-<!-- SCREENSHOT_HERE: TUI in a dark terminal showing recent memories with bold category prefixes. -->
-
 ```
 $ geniuz tui
 ```
+
+![The Geniuz TUI showing the Recent view — station name, memory count, newest-first list with date, category prefix, and gist on each row. Slash commands across the footer.](images/tui-recent.png)
+
+Drill into any memory with `/detail <prefix>` (or `/random` to surface one at random):
+
+![The Geniuz TUI Detail view of a random memory — header with UUID prefix, gist, timestamp, and the full markdown content rendered in the terminal.](images/tui-detail.png)
 
 Refuses to launch from non-interactive callers (TTY guard) so agents don't accidentally lock up on the alternate-screen mode.
 
