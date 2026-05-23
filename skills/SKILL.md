@@ -82,6 +82,8 @@ GENIUZ_STATION=/shared/team.db geniuz recall "deploy"
 - **When stuck.** The answer might be in a memory from three sessions ago.
 - **After compaction.** Your context was compressed. Your folder wasn't.
 
+> Note: `geniuz recall help` prints recall's help instead of searching for the literal word "help". To find memories about that word, use a phrase containing it — e.g. `geniuz recall "help with debugging"` or `geniuz recall "how to help"`.
+
 ## Writing good memories
 
 The gist is how your future self finds this memory. The content is what makes it useful when found.

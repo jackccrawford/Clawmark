@@ -341,7 +341,20 @@ fn run(cli: Cli) -> Result<String, String> {
         Command::Remember { content, gist, parent, json } => {
             // Resolve content: @file or stdin
             let resolved = if content == "-" {
-                use std::io::Read;
+                use std::io::{IsTerminal, Read};
+                // Fail fast if stdin is an interactive terminal — otherwise read_to_string
+                // blocks indefinitely waiting for input, which is the silent-hang case when
+                // someone types `geniuz remember -c -` without piping or redirecting stdin.
+                if std::io::stdin().is_terminal() {
+                    return Err(
+                        "No content on stdin.\n  \
+                         Use one of:\n    \
+                           -c \"inline content\"\n    \
+                           -c @path/to/file\n    \
+                           echo \"content\" | geniuz remember -c - -g \"...\""
+                            .to_string()
+                    );
+                }
                 let mut buf = String::new();
                 std::io::stdin().read_to_string(&mut buf)
                     .map_err(|e| format!("Failed to read stdin: {}", e))?;
