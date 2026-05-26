@@ -190,7 +190,7 @@ fn format_entries(entries: &[SignalEntry], full: bool, db: &DatabaseManager) -> 
     let mut lines = Vec::new();
     for e in entries {
         let ts = crate::shorten_ts(&e.created_at);
-        let score_str = e.score.map(|s| format!(" ({:.2})", s)).unwrap_or_default();
+        let score_str = e.score.map(|s| format!(" ({:.3})", s)).unwrap_or_default();
         if full {
             let content = db.get_full_content(&e.memory_uuid)
                 .ok().flatten().unwrap_or_default();
