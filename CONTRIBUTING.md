@@ -1,47 +1,49 @@
-# Contributing to Clawmark
+# Contributing to Geniuz
 
-Thank you for your interest in contributing. Clawmark is a small project with a clear scope — persistent memory for AI agents. Contributions that improve reliability, platform coverage, and install experience are especially welcome.
+Thanks for your interest in contributing to Geniuz — the memory and configuration substrate for agent-native work.
 
 ## How to contribute
 
-1. **Fork the repo** and create a branch from `main`
-2. **Make your changes** — keep commits focused and well-described
-3. **Test on your platform** — if you're fixing a platform issue, confirm it works on that platform
-4. **Submit a PR** — describe what you changed and why
+### Reporting bugs
 
-## What we look for
+Open an issue at https://github.com/jackccrawford/Geniuz/issues. Include:
+- What you were trying to do
+- What happened instead
+- The Geniuz version (`geniuz --version`)
+- Your platform (macOS, Linux distro, Windows)
+- Steps to reproduce
 
-- **Bug fixes** — especially platform compatibility (glibc, ORT linking, install paths)
-- **Install experience** — the first 60 seconds matter
-- **Documentation** — clear, concise, no hype
-- **Performance** — measured, not assumed
+### Suggesting changes
 
-## What we avoid
+Open an issue describing the change before opening a PR. Geniuz is a small substrate by design — feature additions are evaluated against whether they keep the substrate small or make it bigger. Most ideas are better as external tooling that uses Geniuz than as features inside it.
 
-- Adding runtime dependencies (clawmark is a single binary + SQLite)
-- Cloud features or API keys — clawmark runs fully offline
-- Breaking the CLI interface — `signal`, `tune`, `capture` are stable
-- Over-engineering — if the fix is one line, the PR should be one line
+### Submitting code
 
-## Code style
+1. Fork the repo
+2. Create a branch off `main`
+3. Make your change
+4. Add tests if applicable
+5. Ensure `cargo test` passes
+6. Open a PR with a clear description of what changed and why
 
-- Rust, edition 2021
-- No `unsafe` unless absolutely necessary
-- Error handling: `Result<T, String>` for simplicity (we know, we know)
-- Comments explain *why*, not *what*
+## What we look for in PRs
 
-## Build
+- **Substrate hygiene.** Geniuz's records table is intentionally minimal. PRs that add columns, change schema, or alter triggers need to clear a high bar.
+- **Backward compatibility.** Existing stations and existing CLI behavior should keep working. If a change must break compatibility, it needs a migration path.
+- **Tests.** New behavior gets new tests. Changed behavior gets updated tests.
+- **Documentation.** User-facing changes update the README and any affected guides.
+- **No dependencies for taste.** Adding a dependency is a real decision. The substrate should run on as little as possible.
 
-```bash
-cargo build --release
-cargo test
-```
+## Code of conduct
 
-On Linux with system ORT:
-```bash
-ORT_LIB_LOCATION=/usr/local/lib ORT_PREFER_DYNAMIC_LINK=1 cargo build --release
-```
+Be the kind of person you'd want to collaborate with. Geniuz is built by people who think about agents as collaborators rather than tools, and we extend that to the humans contributing here.
+
+Hostile, demeaning, or off-topic comments will be moderated. Persistent bad-faith engagement will be blocked.
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under MIT.
+Contributions are accepted under the MIT license (see LICENSE). By submitting a PR you confirm that you have the right to license your contribution under MIT.
+
+## Geniuz Team
+
+If you're interested in the paid tier (perpetual agents, team chassis, customer-environment deployment) — Geniuz Team is built and operated by [mVara](https://github.com/mvara-ai). Contact through the link in the main README for pilot and enterprise inquiries.

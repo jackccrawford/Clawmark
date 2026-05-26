@@ -2,6 +2,8 @@
 
 **Your AI remembers now.**
 
+Built and stewarded by [mVara](https://github.com/mvara-ai).
+
 You brief your agent. It does great work. The session ends. Next session — it asks the same questions again. Every insight, every preference, every decision — gone.
 
 Geniuz fixes that. One install, local, private, searchable by meaning. Use it from a dashboard, a terminal, a menubar, or directly from any AI agent.
@@ -106,6 +108,16 @@ Use "geniuz [command] --help" for more information.
 ```
 
 ---
+
+## Geniuz Free vs Geniuz Team
+
+This repository is **Geniuz Free** — MIT-licensed, single-station memory for any AI chassis. Install it, bring your own AI, get memory that survives across conversations.
+
+**[Geniuz Team](https://github.com/mvara-ai)** is the paid tier from mVara: unlimited continuity, perpetual agents that live in your environment, and a team chassis that coordinates around your customers' reality. Geniuz Team is built on the same substrate as Geniuz Free.
+
+If you want memory for yourself or a developer team using existing AI tools — Geniuz Free is what you want.
+
+If you want a configured team of agents living in your private cloud, remembering your work, and coordinating around your customers — that's Geniuz Team. Contact mVara for pilot inquiries.
 
 ## Why local
 
@@ -448,6 +460,14 @@ Your data stays on your computer. Geniuz stores memories in a local SQLite datab
 - [SwiftUI](https://developer.apple.com/swiftui/) — macOS menubar app
 - [MCP](https://modelcontextprotocol.io) — Claude Desktop integration
 - [Azure Trusted Signing](https://learn.microsoft.com/en-us/azure/trusted-signing/) — Windows code signing
+
+## Learn more
+
+- **Geniuz Team** (paid tier): [mvara-ai](https://github.com/mvara-ai)
+- **Built by**: [Jack C. Crawford](https://github.com/jackccrawford)
+- **Discussions**: [GitHub Discussions](https://github.com/jackccrawford/Geniuz/discussions)
+- **Issues**: [GitHub Issues](https://github.com/jackccrawford/Geniuz/issues)
+- **License**: [MIT](LICENSE)
 
 ## License
 

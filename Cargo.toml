@@ -1,6 +1,6 @@
 [package]
 name = "geniuz"
-version = "2.0.4"
+version = "2.0.5"
 edition = "2021"
 description = "Your AI remembers now — persistent memory for AI agents"
 license = "MIT"
@@ -60,3 +60,6 @@ anyhow = "1"
 tray-icon = { version = "0.19", optional = true }
 image = { version = "0.25", default-features = false, features = ["png"], optional = true }
 winit = { version = "0.30", optional = true }
+
+[dev-dependencies]
+tempfile = "3"

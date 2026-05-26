@@ -1137,7 +1137,7 @@ dependencies = [
 
 [[package]]
 name = "geniuz"
-version = "2.0.4"
+version = "2.0.5"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1152,6 +1152,7 @@ dependencies = [
  "rusqlite",
  "serde",
  "serde_json",
+ "tempfile",
  "tokenizers",
  "tray-icon",
  "ureq",
