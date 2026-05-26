@@ -539,3 +539,343 @@ pub struct SignalEntry {
     pub content: Option<String>,
     pub score: Option<f32>,
 }
+
+// =============================================================================
+// Tests
+// =============================================================================
+//
+// Coverage focus: the load-bearing write/read paths that every surface (CLI,
+// TUI, dashboard, MCP) depends on. Embedding is bypassed with a MockBackend
+// returning a fixed zero vector so tests don't require downloading the ONNX
+// model — write/read correctness is what we're verifying, not semantic search
+// quality (which has its own embedding-specific tests in embedding.rs).
+//
+// Pattern: each test gets its own tempdir and DatabaseManager so they don't
+// share state and can run in parallel.
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    /// 384-dim zero vector — same dimension as paraphrase-multilingual-MiniLM-L12-v2
+    /// (the production embedding model). Lets us exercise the write path that
+    /// stores embeddings without invoking the real ONNX backend.
+    const MOCK_DIM: usize = 384;
+
+    struct MockBackend;
+    impl crate::embedding::EmbeddingBackend for MockBackend {
+        fn embed(&self, _text: &str) -> Result<Vec<f32>, String> {
+            Ok(vec![0.0; MOCK_DIM])
+        }
+        fn name(&self) -> &str {
+            "mock-backend-for-tests"
+        }
+    }
+
+    /// Build a fresh DatabaseManager in a per-test tempdir. Returns the
+    /// tempdir guard so the caller keeps it alive for the test's lifetime.
+    fn fresh_db() -> (DatabaseManager, tempfile::TempDir) {
+        let dir = tempdir().expect("tempdir");
+        let db_path = dir.path().join("memory.db");
+        let db = DatabaseManager::new(db_path.to_str().unwrap())
+            .expect("DatabaseManager::new on fresh path");
+        (db, dir)
+    }
+
+    /// Shortcut: insert a signal with the mock backend and return its short UUID.
+    fn insert(db: &DatabaseManager, content: &str, gist: Option<&str>, parent: Option<&str>) -> String {
+        db.signal_with_backend(content, gist, parent, None, Some(&MockBackend))
+            .expect("signal_with_backend")
+    }
+
+    #[test]
+    fn new_initializes_schema_on_fresh_path() {
+        let (db, _dir) = fresh_db();
+        // Schema is in place: count() should succeed and return 0.
+        assert_eq!(db.count().unwrap(), 0);
+    }
+
+    #[test]
+    fn count_is_zero_on_empty_db() {
+        let (db, _dir) = fresh_db();
+        assert_eq!(db.count().unwrap(), 0);
+        assert_eq!(db.thread_count().unwrap(), 0);
+        assert_eq!(db.embedding_count().unwrap(), 0);
+    }
+
+    #[test]
+    fn signal_returns_eight_char_uppercase_uuid() {
+        let (db, _dir) = fresh_db();
+        let short = insert(&db, "first memory", Some("test gist"), None);
+        assert_eq!(short.len(), 8, "short uuid is 8 chars");
+        assert_eq!(short, short.to_uppercase(), "short uuid is uppercase");
+    }
+
+    #[test]
+    fn signal_rejects_empty_content() {
+        let (db, _dir) = fresh_db();
+        let err = db
+            .signal_with_backend("", Some("gist"), None, None, Some(&MockBackend))
+            .expect_err("empty content should error");
+        assert!(err.contains("empty"), "error mentions emptiness: {}", err);
+    }
+
+    #[test]
+    fn signal_rejects_whitespace_only_content() {
+        let (db, _dir) = fresh_db();
+        let err = db
+            .signal_with_backend("   \n\t  ", None, None, None, Some(&MockBackend))
+            .expect_err("whitespace-only content should error");
+        assert!(err.contains("empty"), "error mentions emptiness: {}", err);
+    }
+
+    #[test]
+    fn signal_auto_derives_gist_from_short_content() {
+        let (db, _dir) = fresh_db();
+        let short = insert(&db, "remembered something small", None, None);
+        let entries = db.recent(10).unwrap();
+        let entry = entries.iter().find(|e| e.memory_uuid.starts_with(&short)).expect("inserted entry");
+        assert_eq!(entry.gist, "remembered something small");
+    }
+
+    #[test]
+    fn signal_truncates_auto_gist_for_long_content() {
+        let (db, _dir) = fresh_db();
+        // 300-char content — auto-gist truncates at 197 + "..."
+        let long = "x".repeat(300);
+        let short = insert(&db, &long, None, None);
+        let entries = db.recent(10).unwrap();
+        let entry = entries.iter().find(|e| e.memory_uuid.starts_with(&short)).expect("inserted entry");
+        assert_eq!(entry.gist.len(), 200, "auto-gist is exactly 200 chars (197 + '...')");
+        assert!(entry.gist.ends_with("..."), "auto-gist ends with ellipsis");
+    }
+
+    #[test]
+    fn count_reflects_inserts() {
+        let (db, _dir) = fresh_db();
+        for i in 0..5 {
+            insert(&db, &format!("memory number {}", i), None, None);
+        }
+        assert_eq!(db.count().unwrap(), 5);
+        // All root memories — distinct threads.
+        assert_eq!(db.thread_count().unwrap(), 5);
+    }
+
+    #[test]
+    fn embedding_count_matches_inserts_when_backend_provided() {
+        let (db, _dir) = fresh_db();
+        for i in 0..3 {
+            insert(&db, &format!("memory {}", i), None, None);
+        }
+        assert_eq!(db.embedding_count().unwrap(), 3);
+    }
+
+    #[test]
+    fn recent_returns_newest_first() {
+        let (db, _dir) = fresh_db();
+        // Use explicit timestamps so ordering is deterministic without sleeping.
+        db.signal_with_backend("oldest", Some("oldest"), None, Some("2026-01-01 00:00:00"), Some(&MockBackend))
+            .unwrap();
+        db.signal_with_backend("middle", Some("middle"), None, Some("2026-02-01 00:00:00"), Some(&MockBackend))
+            .unwrap();
+        db.signal_with_backend("newest", Some("newest"), None, Some("2026-03-01 00:00:00"), Some(&MockBackend))
+            .unwrap();
+        let entries = db.recent(10).unwrap();
+        assert_eq!(entries.len(), 3);
+        assert_eq!(entries[0].gist, "newest");
+        assert_eq!(entries[1].gist, "middle");
+        assert_eq!(entries[2].gist, "oldest");
+    }
+
+    #[test]
+    fn recent_respects_limit() {
+        let (db, _dir) = fresh_db();
+        for i in 0..10 {
+            insert(&db, &format!("memory {}", i), None, None);
+        }
+        let entries = db.recent(3).unwrap();
+        assert_eq!(entries.len(), 3);
+    }
+
+    #[test]
+    fn get_by_uuid_prefix_returns_none_for_unknown() {
+        let (db, _dir) = fresh_db();
+        assert!(db.get_by_uuid_prefix("DEADBEEF").unwrap().is_none());
+    }
+
+    #[test]
+    fn get_by_uuid_prefix_resolves_short_uuid() {
+        let (db, _dir) = fresh_db();
+        let short = insert(&db, "find me", Some("findable"), None);
+        let entry = db.get_by_uuid_prefix(&short).unwrap().expect("found by prefix");
+        assert_eq!(entry.gist, "findable");
+        assert!(entry.memory_uuid.starts_with(&short));
+    }
+
+    #[test]
+    fn root_memory_displays_with_no_parent() {
+        let (db, _dir) = fresh_db();
+        let short = insert(&db, "root memory", None, None);
+        let entry = db.get_by_uuid_prefix(&short).unwrap().expect("entry");
+        // Root memories self-parent internally (memory_uuid == parent_uuid in the
+        // table), but get_by_uuid_prefix deliberately hides that on read so
+        // callers see root memories as parent-less. This keeps display surfaces
+        // (CLI, TUI, dashboard) from showing "thread continues from itself".
+        assert!(entry.parent_uuid.is_none(), "root memory presents as parent-less; got {:?}", entry.parent_uuid);
+    }
+
+    #[test]
+    fn signal_threads_to_parent_via_short_uuid() {
+        let (db, _dir) = fresh_db();
+        let parent_short = insert(&db, "parent memory", Some("parent"), None);
+        let _child_short = insert(&db, "child memory", Some("child"), Some(&parent_short));
+        // Parent has one descendant in its thread (parent + 1 child).
+        let chain = db.thread_for(&parent_short, 10).unwrap();
+        assert!(
+            chain.len() >= 2,
+            "thread chain includes parent and child (got {} entries)",
+            chain.len()
+        );
+    }
+
+    #[test]
+    fn keyword_search_finds_substring_match() {
+        let (db, _dir) = fresh_db();
+        insert(&db, "authentication token refresh order fix", Some("fix: auth order"), None);
+        insert(&db, "unrelated note about database", Some("note: db"), None);
+        insert(&db, "more on authentication flow", Some("auth: flow"), None);
+        let results = db.keyword_search("authentication", 10).unwrap();
+        assert_eq!(results.len(), 2, "two memories match 'authentication'");
+    }
+
+    #[test]
+    fn keyword_search_respects_limit() {
+        let (db, _dir) = fresh_db();
+        for i in 0..10 {
+            insert(&db, &format!("matching memory {}", i), None, None);
+        }
+        let results = db.keyword_search("matching", 3).unwrap();
+        assert_eq!(results.len(), 3);
+    }
+
+    #[test]
+    fn last_write_timestamp_returns_none_on_empty_db() {
+        let (db, _dir) = fresh_db();
+        assert!(db.last_write_timestamp().unwrap().is_none());
+    }
+
+    #[test]
+    fn last_write_timestamp_reflects_most_recent_insert() {
+        let (db, _dir) = fresh_db();
+        db.signal_with_backend("first", None, None, Some("2026-01-01 12:00:00"), Some(&MockBackend))
+            .unwrap();
+        db.signal_with_backend("last", None, None, Some("2026-06-15 09:30:00"), Some(&MockBackend))
+            .unwrap();
+        let ts = db.last_write_timestamp().unwrap().expect("has timestamp");
+        assert!(ts.starts_with("2026-06-15"), "got: {}", ts);
+    }
+
+    #[test]
+    fn count_since_days_filters_by_time_window() {
+        let (db, _dir) = fresh_db();
+        // Insert one very old, one recent.
+        db.signal_with_backend("old", None, None, Some("2020-01-01 00:00:00"), Some(&MockBackend))
+            .unwrap();
+        let recent_ts = chrono::Utc::now()
+            .format("%Y-%m-%d %H:%M:%S")
+            .to_string();
+        db.signal_with_backend("recent", None, None, Some(&recent_ts), Some(&MockBackend))
+            .unwrap();
+        // 30-day window catches only the recent.
+        let n = db.count_since_days(30).unwrap();
+        assert_eq!(n, 1);
+    }
+
+    #[test]
+    fn daily_activity_buckets_by_day() {
+        let (db, _dir) = fresh_db();
+        let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
+        db.signal_with_backend("a", None, None, Some(&format!("{} 09:00:00", today)), Some(&MockBackend))
+            .unwrap();
+        db.signal_with_backend("b", None, None, Some(&format!("{} 14:00:00", today)), Some(&MockBackend))
+            .unwrap();
+        let buckets = db.daily_activity(7).unwrap();
+        let today_bucket = buckets.iter().find(|(d, _)| d == &today);
+        let count = today_bucket.map(|(_, n)| *n).unwrap_or(0);
+        assert_eq!(count, 2, "two memories landed today; buckets: {:?}", buckets);
+    }
+
+    #[test]
+    fn thread_count_distinguishes_roots_from_descendants() {
+        let (db, _dir) = fresh_db();
+        let root_a = insert(&db, "thread A root", Some("A"), None);
+        let _child_a = insert(&db, "A reply", None, Some(&root_a));
+        let _root_b = insert(&db, "thread B root", Some("B"), None);
+        // Two roots → two threads, regardless of descendants.
+        assert_eq!(db.thread_count().unwrap(), 2);
+        // Total count is 3 (two roots + one child).
+        assert_eq!(db.count().unwrap(), 3);
+    }
+
+    #[test]
+    fn get_full_content_returns_content_string() {
+        let (db, _dir) = fresh_db();
+        let short = insert(&db, "the full content payload here", Some("short gist"), None);
+        // get_full_content requires the full UUID — look it up via prefix first.
+        let entry = db.get_by_uuid_prefix(&short).unwrap().expect("entry");
+        let full = db.get_full_content(&entry.memory_uuid).unwrap().expect("content present");
+        assert_eq!(full, "the full content payload here");
+    }
+
+    #[test]
+    fn get_full_content_returns_none_for_unknown_uuid() {
+        let (db, _dir) = fresh_db();
+        // Pass a syntactically-plausible full UUID that doesn't exist.
+        assert!(db.get_full_content("00000000-0000-0000-0000-000000000000").unwrap().is_none());
+    }
+
+    #[test]
+    fn since_returns_signals_after_timestamp() {
+        let (db, _dir) = fresh_db();
+        db.signal_with_backend("before", Some("before"), None, Some("2026-01-01 00:00:00"), Some(&MockBackend))
+            .unwrap();
+        db.signal_with_backend("after", Some("after"), None, Some("2026-03-01 00:00:00"), Some(&MockBackend))
+            .unwrap();
+        let results = db.since("2026-02-01 00:00:00", 10).unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].gist, "after");
+    }
+
+    #[test]
+    fn random_returns_none_on_empty_db() {
+        let (db, _dir) = fresh_db();
+        assert!(db.random().unwrap().is_none());
+    }
+
+    #[test]
+    fn random_returns_some_when_signals_exist() {
+        let (db, _dir) = fresh_db();
+        insert(&db, "only memory", None, None);
+        let entry = db.random().unwrap().expect("entry");
+        assert_eq!(entry.gist, "only memory");
+    }
+
+    #[test]
+    fn embedding_model_round_trips() {
+        let (db, _dir) = fresh_db();
+        assert!(db.get_embedding_model().unwrap().is_none(), "no model set initially");
+        db.set_embedding_model("test-model-id").unwrap();
+        assert_eq!(db.get_embedding_model().unwrap().as_deref(), Some("test-model-id"));
+    }
+
+    #[test]
+    fn get_uncached_signals_returns_empty_when_all_cached() {
+        let (db, _dir) = fresh_db();
+        // Inserts with MockBackend cache embeddings, so no uncached.
+        insert(&db, "memory one", None, None);
+        insert(&db, "memory two", None, None);
+        let uncached = db.get_uncached_signals().unwrap();
+        assert_eq!(uncached.len(), 0);
+    }
+}
